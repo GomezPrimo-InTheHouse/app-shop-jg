@@ -64,7 +64,10 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
+      <div className="min-h-screen 
+                  bg-neutral-50 text-neutral-900
+                  dark:bg-neutral-950 dark:text-neutral-100
+                  flex flex-col">
         <header className="w-full border-b border-neutral-800 bg-neutral-950/80 backdrop-blur sticky top-0 z-20">
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
             <Link

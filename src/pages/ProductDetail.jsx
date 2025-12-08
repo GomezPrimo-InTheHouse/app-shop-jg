@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { fetchProductos } from "../api/productsApi.js";
 import StatusNotification from "../components/notification/StatusNotification.jsx";
+import ShopHeader from "../components/layout/ShopHeader.jsx";
+import { useCart } from "../context/CartContext.jsx";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -13,7 +14,9 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(!productFromState);
   const [error, setError] = useState("");
 
-  // Si no viene por state (ej: URL directa), buscamos en la API
+  const { addItem, openCart } = useCart();
+
+  // Cargar producto si entro por URL directa
   useEffect(() => {
     const loadProduct = async () => {
       if (productFromState) return;
@@ -23,7 +26,9 @@ const ProductDetail = () => {
         setError("");
 
         const data = await fetchProductos();
-        const found = data.find((p) => p.id === Number(id) && p.subir_web);
+        const found = data.find(
+          (p) => p.id === Number(id) && p.subir_web
+        );
 
         if (!found) {
           setError("No encontramos este producto en la tienda web.");
@@ -45,7 +50,7 @@ const ProductDetail = () => {
 
   const handleImageError = (e) => {
     e.target.src =
-      "https://via.placeholder.com/600x600?text=Sin+imagen";
+      "https://via.placeholder.com/600x600/F3F4F6/6B7280?text=Sin+imagen+JG";
   };
 
   const handleWhatsApp = () => {
@@ -62,73 +67,48 @@ const ProductDetail = () => {
     window.open(url, "_blank");
   };
 
+  const handleAddToCart = () => {
+    if (!product) return;
+    addItem(product);
+    openCart();
+  };
+
+  const BaseLayout = ({ children }) => (
+    <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+      <ShopHeader />
+      {children}
+    </div>
+  );
+
+  // Estados de carga / error
   if (loading) {
     return (
-      <div className="min-h-screen 
-                  bg-neutral-50 text-neutral-900
-                  dark:bg-neutral-950 dark:text-neutral-100
-                  flex flex-col">
-        <header className="w-full border-b border-neutral-800 bg-neutral-950/80 backdrop-blur sticky top-0 z-20">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-xs sm:text-sm text-neutral-200 
-                         border border-neutral-700 hover:border-neutral-500 
-                         rounded-full px-3 py-1.5 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Volver
-            </Link>
-
-            <h1 className="text-sm sm:text-base text-neutral-300">
-              Detalle del producto
-            </h1>
-
-            <div className="w-[75px]" />
-          </div>
-        </header>
-
-        <main className="flex-1 flex items-center justify-center px-4">
+      <BaseLayout>
+        <main className="flex h-[60vh] items-center justify-center px-4">
           <StatusNotification
             variant="loading"
             message="Cargando información del producto..."
             showSpinner
           />
         </main>
-      </div>
+      </BaseLayout>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
-        <header className="w-full border-b border-neutral-800 bg-neutral-950/80 backdrop-blur sticky top-0 z-20">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-xs sm:text-sm text-neutral-200 
-                         border border-neutral-700 hover:border-neutral-500 
-                         rounded-full px-3 py-1.5 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Volver
-            </Link>
-
-            <h1 className="text-sm sm:text-base text-neutral-300">
-              Detalle del producto
-            </h1>
-
-            <div className="w-[75px]" />
-          </div>
-        </header>
-
-        <main className="flex-1 flex items-center justify-center px-4">
-          <StatusNotification variant="error" message={error || "Producto no encontrado."} />
+      <BaseLayout>
+        <main className="flex h-[60vh] items-center justify-center px-4">
+          <StatusNotification
+            variant="error"
+            message={error || "Producto no encontrado."}
+          />
         </main>
-      </div>
+      </BaseLayout>
     );
   }
 
+  // Datos calculados
   const formattedPrice = product.precio.toLocaleString("es-AR", {
     style: "currency",
     currency: "ARS",
@@ -136,109 +116,158 @@ const ProductDetail = () => {
   });
 
   const hasOffer = product.oferta && product.oferta > 0;
+  const originalPrice =
+    hasOffer && product.oferta > 0
+      ? product.precio / (1 - product.oferta / 100)
+      : null;
+
+  const shortDescription = product.descripcion;       // intro corta
+  const longDescription = product.descripcion_web;    // detalle largo solo aquí
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
-      {/* Header minimal */}
-      <header className="w-full border-b border-neutral-800 bg-neutral-950/80 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-xs sm:text-sm text-neutral-200 
-                       border border-neutral-700 hover:border-neutral-500 
-                       rounded-full px-3 py-1.5 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver
-          </Link>
-
-          <h1 className="text-sm sm:text-base text-neutral-300">
-            Detalle del producto
-          </h1>
-
-          <div className="w-[75px]" />
-        </div>
-      </header>
-
-      <main className="flex-1">
-        <div className="max-w-5xl mx-auto px-4 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Imagen del producto */}
+    <BaseLayout>
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+        {/* Card principal */}
+        <section
+          className="grid grid-cols-1 gap-8 rounded-2xl border 
+                     border-slate-200 bg-white/95 p-4 shadow-lg
+                     sm:p-6 lg:grid-cols-[1.15fr,1fr]
+                     dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-2xl"
+        >
+          {/* Imagen */}
           <div className="w-full">
-            <div className="relative rounded-2xl aspect-square bg-neutral-800 overflow-hidden">
+            <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-200 dark:bg-slate-900">
               <img
                 src={product.foto_url}
                 alt={product.nombre}
                 onError={handleImageError}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
 
               {hasOffer && (
-                <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-amber-500 text-neutral-900 text-xs font-semibold">
-                  {product.oferta}% OFF
+                <span
+                  className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full 
+                             border border-indigo-400/70 bg-indigo-700/95 px-3 py-1 shadow-lg"
+                >
+                  <span className="text-xs font-extrabold text-yellow-300">
+                    -{product.oferta}%
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-white">
+                    OFF
+                  </span>
                 </span>
               )}
             </div>
           </div>
 
-          {/* Info del producto */}
+          {/* Info */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-xl sm:text-2xl font-semibold">
+            {/* Nombre */}
+            <h1 className="text-xl font-semibold sm:text-2xl">
               {product.nombre}
-            </h2>
+            </h1>
 
-            <p className="text-sm sm:text-base text-neutral-300 leading-relaxed">
-              {product.descripcion}
-            </p>
+            {/* Descripción corta */}
+            {shortDescription && (
+              <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                {shortDescription}
+              </p>
+            )}
 
-            <div className="flex items-center gap-3 mt-2">
+            {/* Chips */}
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               {product.categoria && (
-                <span className="px-3 py-1 rounded-full border border-neutral-700 text-xs sm:text-sm">
+                <span
+                  className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs sm:text-sm
+                             text-slate-700
+                             dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200"
+                >
                   {product.categoria}
                 </span>
               )}
 
               {hasOffer && (
-                <span className="px-3 py-1 rounded-full border border-amber-600/60 text-amber-300 text-xs sm:text-sm">
+                <span className="rounded-full border border-amber-500/70 bg-amber-500/10 px-3 py-1 text-xs sm:text-sm text-amber-500 dark:text-amber-300">
                   Oferta especial
                 </span>
               )}
             </div>
 
-            <div className="text-2xl sm:text-3xl font-semibold mt-3">
-              {formattedPrice}
+            {/* Precios */}
+            <div className="mt-3 flex items-baseline gap-3">
+              <span className="text-2xl font-extrabold text-indigo-600 sm:text-3xl dark:text-indigo-400">
+                {formattedPrice}
+              </span>
+              {originalPrice && (
+                <span className="text-xs font-medium text-slate-400 line-through dark:text-slate-500">
+                  {originalPrice.toLocaleString("es-AR", {
+                    style: "currency",
+                    currency: "ARS",
+                    maximumFractionDigits: 0,
+                  })}
+                </span>
+              )}
             </div>
 
+            {/* Descripción larga */}
+            {longDescription && (
+              <section className="mt-4 space-y-2">
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Detalle del producto
+                </h3>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                  {longDescription}
+                </p>
+              </section>
+            )}
+
             {/* Botones */}
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 rounded-full bg-indigo-600 px-4 py-2 text-sm sm:text-base font-semibold 
+                           text-white shadow-md hover:bg-indigo-700 hover:shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1
+                           focus:ring-offset-slate-100 dark:focus:ring-offset-slate-950
+                           transition-colors"
+              >
+                Agregar al carrito
+              </button>
+
               <button
                 onClick={handleWhatsApp}
-                className="flex-1 rounded-full bg-green-600 hover:bg-green-500 
-                           text-white px-4 py-2 text-sm sm:text-base transition-colors"
+                className="flex-1 rounded-full border border-green-500 px-4 py-2 text-sm sm:text-base font-semibold
+                           text-green-600 hover:bg-green-500/10
+                           dark:border-green-400 dark:text-green-300 dark:hover:bg-green-500/10
+                           focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1
+                           focus:ring-offset-slate-100 dark:focus:ring-offset-slate-950
+                           transition-colors"
               >
                 Consultar por WhatsApp
               </button>
+            </div>
 
+            {/* Link volver */}
+            <div className="mt-2">
               <Link
                 to="/"
-                className="flex-1 rounded-full border border-neutral-700 hover:border-neutral-500 
-                           text-neutral-200 px-4 py-2 text-sm sm:text-base text-center transition-colors"
+                className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
               >
-                Volver a productos
+                ← Volver a productos
               </Link>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Nota extra */}
-        <div className="max-w-4xl mx-auto px-4 py-8 text-neutral-400 text-sm border-t border-neutral-800 mt-6">
+        {/* Nota inferior */}
+        <div className="mt-8 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
           <p>
-            ⚡ Este producto está disponible para venta en el local.  
-            Los precios pueden variar según stock y promociones.  
-            Consultá disponibilidad por WhatsApp antes de realizar tu compra.
+            ⚡ Este producto está disponible para venta en el local. Los precios pueden variar según stock y
+            promociones. Te recomendamos consultar disponibilidad por WhatsApp antes de realizar tu compra.
           </p>
         </div>
       </main>
-    </div>
+    </BaseLayout>
   );
 };
 

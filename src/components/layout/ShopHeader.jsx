@@ -1,85 +1,105 @@
-import { ShoppingBag, Globe, UserCircle } from "lucide-react"; 
-import ThemeToggleButton from "../buttons/ThemeToggleButton";
+import { Link } from "react-router-dom";
+import { MapPin, User, Heart, ShoppingCart, Sun, Moon } from "lucide-react";
+import { useCart } from "../../context/CartContext.jsx";
+import { useTheme } from "../../hook/useTheme.js"; // 👈 ajustá la ruta si tu hook está en otro lado
 
 const ShopHeader = () => {
-  // Define la URL de la landing page.
-  const landingPageURL = "https://web-jg-informatica.vercel.app/"; 
+  const { totalItems, totalAmount, openCart } = useCart();
+  const { theme, toggleTheme } = useTheme();
 
-  // Función placeholder para el login
-  const handleLogin = () => {
-      alert("Redirigiendo a la página de Login/Perfil...");
-      // Aquí iría la lógica de navegación a tu ruta /login o /profile
-  };
+  const formatPrice = (value) =>
+    value.toLocaleString("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 0,
+    });
 
   return (
-    // Sticky Header con Estilos Dark Mode
-    <header 
-      className="w-full border-b backdrop-blur-sm sticky top-0 z-20
-                 bg-gray-50/95 dark:bg-gray-950/95 
-                 border-gray-200 dark:border-gray-800"
-    >
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-
-        {/* 1. Botón de Navegación a la Web Principal (IZQUIERDA) */}
-        <a
-          href={landingPageURL}
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium
-                     text-gray-700 dark:text-gray-300 
-                     border border-gray-300 dark:border-gray-700 
-                     bg-white dark:bg-gray-900
-                     hover:bg-gray-100 dark:hover:bg-gray-800 
-                     rounded-full px-3 py-1.5 transition-colors duration-200"
+    <header className="w-full border-b border-slate-800 bg-slate-950/90 backdrop-blur dark:bg-slate-950/90">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+        {/* Logo / nombre de la tienda */}
+        <Link
+          to="/"
+          className="text-base font-semibold text-slate-50 tracking-tight"
         >
-          <Globe className="w-4 h-4" />
-          <span className="hidden sm:inline">Conocer la Web</span>
-          <span className="sm:hidden">Web</span>
-        </a>
+          JG Shop
+        </Link>
 
-        {/* 2. Logo / Nombre (CENTRO) */}
-        <div className="flex flex-col items-center justify-center -ml-2 sm:ml-0">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-            <span className="font-bold text-base sm:text-xl tracking-wide 
-                             text-gray-900 dark:text-gray-100">
-              JG Shop
+        {/* Centro: método de entrega (futuro modal) */}
+        <button
+          type="button"
+          className="hidden sm:inline-flex items-center gap-2 text-xs sm:text-sm
+                     text-slate-300 hover:text-white transition-colors"
+          // TODO: acá vamos a abrir el modal de puntos de retiro
+        >
+          <MapPin className="h-4 w-4" />
+          <span>
+            Elegí el <span className="font-semibold">método de entrega</span>
+          </span>
+        </button>
+
+        {/* Derecha: login, favoritos, carrito, theme toggle */}
+        <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+          {/* Ingresar */}
+          <button
+            type="button"
+            className="hidden sm:inline-flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
+          >
+            <User className="h-4 w-4" />
+            <span>Ingresar</span>
+          </button>
+
+          {/* Favoritos */}
+          <button
+            type="button"
+            className="hidden sm:inline-flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
+          >
+            <Heart className="h-4 w-4" />
+            <span>Favoritos</span>
+          </button>
+
+          {/* Carrito */}
+          <button
+            type="button"
+            onClick={openCart}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-700 
+                       px-3 py-1.5 text-slate-100 hover:border-indigo-400 hover:bg-slate-900 
+                       hover:text-white transition-colors relative"
+          >
+            <div className="relative">
+              <ShoppingCart className="h-4 w-4" />
+
+              {totalItems > 0 && (
+                <span
+                  className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center 
+                             rounded-full bg-green-500 px-1 text-[10px] font-bold text-white shadow-md"
+                >
+                  {totalItems}
+                </span>
+              )}
+            </div>
+
+            <span className="font-semibold text-green-400 text-xs sm:text-sm">
+              {totalItems > 0 ? formatPrice(totalAmount) : formatPrice(0)}
             </span>
-          </div>
-          <p className="text-[10px] sm:text-xs font-light 
-                        text-gray-500 dark:text-gray-400 hidden sm:block">
-            Accesorios, cargadores, parlantes y más
-          </p>
-        </div>
-        
-        {/* 3. Controles de Usuario (DERECHA) - Agrupados y Ordenados */}
-        <div className="flex items-center gap-3">
-            
-            {/* NUEVO: Botón de Perfil / Login */}
-            <button
-                onClick={handleLogin}
-                aria-label="Iniciar sesión o ver perfil de usuario"
-                className="p-2 rounded-full transition-colors duration-300 
-                           bg-gray-100 dark:bg-gray-800 
-                           hover:bg-gray-200 dark:hover:bg-gray-700 
-                           text-gray-600 dark:text-gray-300"
-            >
-                <UserCircle className="h-6 w-6" />
-            </button>
+          </button>
 
-            {/* Theme Toggle Button */}
-            <ThemeToggleButton />
-            
-            {/* Botón de Carrito de Compras (Placeholder) */}
-            <button
-                aria-label="Ver carrito de compras"
-                className="p-2 rounded-full transition-colors duration-300 
-                           bg-indigo-100 dark:bg-indigo-900 
-                           hover:bg-indigo-200 dark:hover:bg-indigo-800 
-                           text-indigo-600 dark:text-indigo-300"
-            >
-                <ShoppingBag className="h-6 w-6" />
-            </button>
+          {/* Toggle tema claro/oscuro - SIEMPRE AL EXTREMO DERECHO */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full 
+                       border border-slate-700 bg-slate-900 text-slate-200
+                       hover:border-indigo-400 hover:text-white hover:bg-slate-800
+                       transition-colors"
+            aria-label="Cambiar tema"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
         </div>
       </div>
     </header>

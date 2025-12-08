@@ -4,17 +4,22 @@ import { fetchProductos } from "../api/productsApi.js";
 import StatusNotification from "../components/notification/StatusNotification.jsx";
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { registrarVisualizacionApi } from "../api/shopApi.js";
 
 const ProductDetail = () => {
   const { id } = useParams();
   const location = useLocation();
   const productFromState = location.state?.product || null;
 
+  const { cliente, sesionId } = useAuth();
+
   const [product, setProduct] = useState(productFromState);
   const [loading, setLoading] = useState(!productFromState);
   const [error, setError] = useState("");
 
-  const { addItem, openCart } = useCart();
+  // ⬅️ usamos addToCart en lugar de addItem
+  const { addToCart, openCart } = useCart();
 
   // Cargar producto si entro por URL directa
   useEffect(() => {
@@ -48,6 +53,20 @@ const ProductDetail = () => {
     loadProduct();
   }, [id, productFromState]);
 
+  // luego de que el producto esté cargado:
+  useEffect(() => {
+    if (!product) return;
+
+    registrarVisualizacionApi({
+      producto_id: product.id,
+      cliente_id: cliente?.id || null,
+      sesion_cliente_id: sesionId || null,
+      origen: "web_shop",
+    }).catch((err) => {
+      console.error("Error registrando visualización", err);
+    });
+  }, [product, cliente?.id, sesionId]);
+
   const handleImageError = (e) => {
     e.target.src =
       "https://via.placeholder.com/600x600/F3F4F6/6B7280?text=Sin+imagen+JG";
@@ -69,8 +88,9 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
-    addItem(product);
-    openCart();
+    // 👇 ahora usamos addToCart del contexto
+    addToCart(product, 1);
+    openCart?.(); // por si en algún momento openCart no existe, no rompe
   };
 
   const BaseLayout = ({ children }) => (
@@ -121,8 +141,8 @@ const ProductDetail = () => {
       ? product.precio / (1 - product.oferta / 100)
       : null;
 
-  const shortDescription = product.descripcion;       // intro corta
-  const longDescription = product.descripcion_web;    // detalle largo solo aquí
+  const shortDescription = product.descripcion; // intro corta
+  const longDescription = product.descripcion_web; // detalle largo solo aquí
 
   return (
     <BaseLayout>

@@ -1,3 +1,4 @@
+// src/components/cart/CartDrawer.jsx
 import { X } from "lucide-react";
 import { useCart } from "../../context/CartContext.jsx";
 import { useNavigate } from "react-router-dom";
@@ -6,12 +7,15 @@ const CartDrawer = () => {
   const { items, isCartOpen, closeCart, totalAmount, removeItem } = useCart();
   const navigate = useNavigate();
 
-  const formatPrice = (value) =>
-    value.toLocaleString("es-AR", {
+  // 🔧 Fix: proteger por si value viene undefined / null
+  const formatPrice = (value) => {
+    const num = Number(value ?? 0); // si viene undefined/null -> 0
+    return num.toLocaleString("es-AR", {
       style: "currency",
       currency: "ARS",
       maximumFractionDigits: 0,
     });
+  };
 
   const handleContinueShopping = () => {
     closeCart();
@@ -67,11 +71,17 @@ const CartDrawer = () => {
                 dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-slate-200 dark:bg-slate-800">
-                  <img
-                    src={item.foto_url}
-                    alt={item.nombre}
-                    className="h-full w-full object-cover"
-                  />
+                  {item.foto_url ? (
+                    <img
+                      src={item.foto_url}
+                      alt={item.nombre}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-[10px] text-slate-500 dark:text-slate-400">
+                      Sin imagen
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col justify-between flex-1">
@@ -119,9 +129,14 @@ const CartDrawer = () => {
           {/* FINALIZAR COMPRA */}
           <button
             disabled={items.length === 0}
+            onClick={() => {
+              if (items.length === 0) return;
+              closeCart();
+              navigate("/checkout");
+            }}
             className="w-full rounded-full bg-green-600 hover:bg-green-700
-                       text-white text-sm font-semibold py-2 shadow-md transition
-                       disabled:opacity-40"
+                    text-white text-sm font-semibold py-2 shadow-md transition
+                    disabled:opacity-40"
           >
             Finalizar compra
           </button>

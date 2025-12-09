@@ -1,33 +1,43 @@
 // src/context/NotificationContext.jsx
 import { createContext, useContext, useState, useCallback } from "react";
-import StatusNotification from "../components/notification/StatusNotification";
+import StatusNotification from "../components/notification/StatusNotification.jsx";
 
 const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
   const [notification, setNotification] = useState(null);
-  const [key, setKey] = useState(0); // para forzar animación
 
-  const showNotification = useCallback((type, message) => {
-    setKey((k) => k + 1);
-    setNotification({ type, message });
+  const showNotification = useCallback(
+    (variant, message, options = {}) => {
+      const id = Date.now();
+      setNotification({
+        id,
+        variant,       // "success" | "error" | "info" | "warning" | "loading" ...
+        message,
+        duration: options.duration ?? 3000,   // 3s por defecto
+      });
+    },
+    []
+  );
+
+  const hideNotification = useCallback(() => {
+    setNotification(null);
   }, []);
 
-  const hideNotification = () => setNotification(null);
-
   return (
-    <NotificationContext.Provider value={{ showNotification }}>
+    <NotificationContext.Provider value={{ showNotification, hideNotification }}>
       {children}
 
       {notification && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <StatusNotification
-            key={key}
-            type={notification.type}
-            message={notification.message}
-            onClose={hideNotification}
-          />
-        </div>
+        <StatusNotification
+          key={notification.id}
+          // props mínimos que ya usás
+          variant={notification.variant}
+          message={notification.message}
+          // nuevos props para autocierre
+          duration={notification.duration}
+          onClose={hideNotification}
+        />
       )}
     </NotificationContext.Provider>
   );

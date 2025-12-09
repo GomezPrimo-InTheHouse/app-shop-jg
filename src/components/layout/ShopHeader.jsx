@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, User, Heart, ShoppingCart, Sun, Moon } from "lucide-react";
 import { useCart } from "../../context/CartContext.jsx";
-import { useTheme } from "../../hook/useTheme.js"; // 👈 ajustá si tu ruta real es /hooks
+import { useTheme } from "../../hook/useTheme.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import LoginModal from "../shop/LoginModal.jsx";
 
@@ -14,7 +14,6 @@ const ShopHeader = () => {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // 🔧 Protegemos por si viene undefined/null
   const formatPrice = (value) =>
     Number(value ?? 0).toLocaleString("es-AR", {
       style: "currency",
@@ -23,13 +22,17 @@ const ShopHeader = () => {
     });
 
   const handleLoginClick = () => {
-    if (cliente) return; // si ya está logueado, no abrimos modal
+    if (cliente) return;
     setIsLoginModalOpen(true);
   };
 
   const handleLogout = () => {
     logout();
   };
+
+  // Inicial para mobile (si está logueado)
+  const userInitial =
+    cliente?.nombre?.[0]?.toUpperCase() || cliente?.apellido?.[0]?.toUpperCase() || null;
 
   return (
     <>
@@ -43,12 +46,11 @@ const ShopHeader = () => {
             JG Shop
           </Link>
 
-          {/* Centro: método de entrega (futuro modal) */}
+          {/* Centro: método de entrega (solo desktop/tablet) */}
           <button
             type="button"
             className="hidden sm:inline-flex items-center gap-2 text-xs sm:text-sm
                        text-slate-300 hover:text-white transition-colors"
-            // TODO: acá vamos a abrir el modal de puntos de retiro
           >
             <MapPin className="h-4 w-4" />
             <span>
@@ -58,7 +60,7 @@ const ShopHeader = () => {
 
           {/* Derecha: login/usuario, favoritos, carrito, theme toggle */}
           <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
-            {/* Ingresar / Usuario */}
+            {/* Ingresar / Usuario – Desktop */}
             <button
               type="button"
               onClick={cliente ? handleLogout : handleLoginClick}
@@ -70,7 +72,26 @@ const ShopHeader = () => {
               </span>
             </button>
 
-            {/* Favoritos (de momento solo visual) */}
+            {/* Ingresar / Usuario – Mobile (solo ícono) */}
+            <button
+              type="button"
+              onClick={cliente ? handleLogout : handleLoginClick}
+              className="inline-flex sm:hidden h-9 w-9 items-center justify-center rounded-full 
+                         border border-slate-700 bg-slate-900 text-slate-200
+                         hover:border-indigo-400 hover:text-white hover:bg-slate-800
+                         transition-colors"
+              aria-label={cliente ? "Cerrar sesión" : "Iniciar sesión"}
+            >
+              {cliente && userInitial ? (
+                <span className="text-xs font-semibold">
+                  {userInitial}
+                </span>
+              ) : (
+                <User className="h-4 w-4" />
+              )}
+            </button>
+
+            {/* Favoritos (solo desktop por ahora) */}
             <button
               type="button"
               className="hidden sm:inline-flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
@@ -105,7 +126,7 @@ const ShopHeader = () => {
               </span>
             </button>
 
-            {/* Toggle tema claro/oscuro - SIEMPRE AL EXTREMO DERECHO */}
+            {/* Toggle tema claro/oscuro - siempre al extremo derecho */}
             <button
               type="button"
               onClick={toggleTheme}
@@ -125,7 +146,7 @@ const ShopHeader = () => {
         </div>
       </header>
 
-      {/* Modal de login (reutiliza la misma lógica que LoginClientePage) */}
+      {/* Modal de login */}
       <LoginModal
         isOpen={isLoginModalOpen && !cliente}
         onClose={() => setIsLoginModalOpen(false)}

@@ -11,6 +11,7 @@ import { CartProvider } from "./context/CartContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CouponProvider } from "./context/CouponContext.jsx";
 import { NotificationProvider } from "./context/NotificationContext.jsx";
+import ConfirmacionCompraPage from "./pages/ConfirmacionCompraPage.jsx"; // 👈 NUEVO
 
 import CartDrawer from "./components/cart/CartDrawer.jsx";
 
@@ -29,6 +30,10 @@ const App = () => {
               <Route path="/producto/:id" element={<ProductDetail />} />
               <Route path="/checkout" element={<FinalizarCompraPage />} />
               <Route path="/mis-cupones" element={<MisCuponesPage />} />
+              <Route
+                path="/shop/confirmacion"
+                element={<ConfirmacionCompraPage />}
+              />
             </Routes>
           </CartProvider>
         </CouponProvider>

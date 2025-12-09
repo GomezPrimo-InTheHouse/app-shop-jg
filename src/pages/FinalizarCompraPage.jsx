@@ -22,44 +22,59 @@ const FinalizarCompraPage = () => {
   const [loading, setLoading] = useState(false);
 
   const handleConfirmarCompra = async () => {
-    if (!cliente) {
-      showNotification("warning", "Tenés que iniciar sesión para finalizar la compra.");
-      return;
-    }
-    if (itemsForBackend.length === 0) {
-      showNotification("warning", "Tu carrito está vacío.");
-      return;
+  if (!cliente) {
+    showNotification("warning", "Tenés que iniciar sesión para finalizar la compra.");
+    return;
+  }
+
+  if (itemsForBackend.length === 0) {
+    showNotification("warning", "Tu carrito está vacío.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    // Armamos payload sin enviar codigo_cupon nulo
+    const payload = {
+      cliente_id: cliente.id,
+      items: itemsForBackend,
+      monto_abonado: montoAbonado,
+      estado_nombre: "PENDIENTE_PAGO",
+    };
+
+    if (cupon?.codigo) {
+      payload.codigo_cupon = cupon.codigo;
     }
 
-    setLoading(true);
-    try {
-      const resp = await crearVentaApi({
-        cliente_id: cliente.id,
-        items: itemsForBackend,
-        monto_abonado: montoAbonado,
-        estado_nombre: "PENDIENTE_PAGO",
-        codigo_cupon: cupon?.codigo || null,
-      });
+    const resp = await crearVentaApi(payload);
 
-      clearCart();
-      showNotification("success", "Compra registrada correctamente.");
+    clearCart();
+    showNotification("success", "Compra registrada correctamente.");
 
-      navigate("/shop/confirmacion", {
-        state: {
-          venta: resp.venta,
-          detalles: resp.detalles,
-          total_bruto: resp.total_bruto,
-          descuento: resp.descuento,
-          total_final: resp.total_final,
-        },
-      });
-    } catch (error) {
-      console.error(error);
-      showNotification("error", "No se pudo registrar la compra.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    navigate("/shop/confirmacion", {
+      state: {
+        venta: resp.venta,
+        detalles: resp.detalles,
+        total_bruto: resp.total_bruto,
+        descuento: resp.descuento,
+        total_final: resp.total_final,
+      },
+    });
+  } catch (error) {
+    console.error("Error creando venta", error);
+
+    const backendMsg =
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      "No se pudo registrar la compra.";
+
+    showNotification("error", backendMsg);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // 🔧 fallback seguro: si no hay cupón ni total, usamos 0
   const totalMostrado = totalConDescuento ?? totalAmount ?? 0;

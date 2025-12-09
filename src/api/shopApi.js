@@ -40,14 +40,20 @@ export const crearVentaApi = ({
   monto_abonado = 0,
   estado_nombre = "PENDIENTE_PAGO",
   codigo_cupon = null,
-}) =>
-  axios.post(`${API}/shop/ventas`, {
+}) => {
+  const payload = {
     cliente_id,
     items,
     monto_abonado,
     estado_nombre,
-    codigo_cupon,
-  });
+  };
+
+  if (codigo_cupon) {
+    payload.codigo_cupon = codigo_cupon;
+  }
+
+  return axios.post(`${API}/shop/ventas`, payload);
+};
 
 // MIS CUPONES
 export const obtenerCuponesClienteApi = (cliente_id) =>

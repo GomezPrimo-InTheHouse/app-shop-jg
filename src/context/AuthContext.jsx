@@ -86,6 +86,7 @@
 // export const useAuth = () => useContext(AuthContext);
 
 // src/context/AuthContext.jsx
+// src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { loginShopApi } from "../api/shopApi";
 import { useNotification } from "./NotificationContext";
@@ -98,10 +99,10 @@ export const AuthProvider = ({ children }) => {
   const { showNotification } = useNotification();
 
   const [cliente, setCliente] = useState(null);
-  const [sesionId, setSesionId] = useState(null); // lo podés seguir usando (si lo necesitás)
+  const [sesionId, setSesionId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ NUEVO estado shop
+  // ✅ Estado shop
   const [canalCliente, setCanalCliente] = useState(null);
   const [cuponActivo, setCuponActivo] = useState(null);
   const [cuponFlags, setCuponFlags] = useState({
@@ -115,6 +116,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return;
+
     try {
       const parsed = JSON.parse(raw);
 
@@ -145,13 +147,24 @@ export const AuthProvider = ({ children }) => {
     else localStorage.removeItem(LS_KEY);
   }, [cliente, canalCliente, cuponActivo, cuponFlags]);
 
-  // ✅ LOGIN nuevo: identificación
+  // ✅ LOGIN: identificación de comprador
   const login = async ({ nombre, apellido, dni, email }) => {
     setLoading(true);
-    try {
-      const data = await loginShopApi({ nombre, apellido, dni, email });
 
-      setCliente(data?.cliente ?? null);
+    try {
+      const resp = await loginShopApi({ nombre, apellido, dni, email });
+
+      // 🔧 compatibilidad: si loginShopApi devuelve axios response => resp.data
+      // si devuelve data directo => resp
+      const data = resp?.data ?? resp;
+
+      const clienteResp = data?.cliente ?? null;
+
+      if (!clienteResp) {
+        throw new Error("No se recibió 'cliente' desde /shop/login");
+      }
+
+      setCliente(clienteResp);
       setCanalCliente(data?.canal_cliente ?? null);
       setCuponActivo(data?.cupon_activo ?? null);
       setCuponFlags({
@@ -161,7 +174,7 @@ export const AuthProvider = ({ children }) => {
         cupon_block_reason: data?.cupon_block_reason ?? null,
       });
 
-      // UX: mensajes claros
+      // ✅ UX: mensajes claros
       if (data?.cupon_activo?.codigo) {
         showNotification(
           "success",
@@ -179,11 +192,13 @@ export const AuthProvider = ({ children }) => {
 
       return data;
     } catch (err) {
-      const msg =
+      const backendMsg =
         err?.response?.data?.error ||
         err?.response?.data?.message ||
+        err?.message ||
         "No se pudo identificar al comprador.";
-      showNotification("error", msg);
+
+      showNotification("error", backendMsg);
       throw err;
     } finally {
       setLoading(false);
@@ -201,6 +216,7 @@ export const AuthProvider = ({ children }) => {
       cupon_next_available_at: null,
       cupon_block_reason: null,
     });
+    localStorage.removeItem(LS_KEY);
   };
 
   const value = useMemo(
@@ -211,7 +227,6 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
 
-      // ✅ NUEVO (lo que pide tu prompt)
       canalCliente,
       cuponActivo,
       cuponFlags,
@@ -223,3 +238,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+

@@ -122,3 +122,10 @@ export const registrarVisualizacionApi = ({
     sesion_cliente_id,
     origen,
   });
+
+
+  // // MIS CUPONES
+export const obtenerCuponesClienteApi = (cliente_id) =>
+  axios.get(`${API}/shop/cupones`, {
+    params: { cliente_id },
+  });

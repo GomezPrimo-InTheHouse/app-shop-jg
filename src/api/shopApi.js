@@ -108,3 +108,17 @@ export const crearVentaApi = ({
 
   return axios.post(`${API}/shop/ventas`, payload).then((r) => r.data);
 };
+
+// // REGISTRAR VISUALIZACIÓN
+export const registrarVisualizacionApi = ({
+  producto_id,
+  cliente_id = null,
+  sesion_cliente_id = null,
+  origen = "web_shop",
+}) =>
+  axios.post(`${API}/shop/visualizaciones`, {
+    producto_id,
+    cliente_id,
+    sesion_cliente_id,
+    origen,
+  });

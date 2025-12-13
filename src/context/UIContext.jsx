@@ -1,15 +1,15 @@
 import { createContext, useContext, useState } from "react";
 
-const UiContext = createContext(null);
+const UIContext = createContext(null);
 
-export const UiProvider = ({ children }) => {
+export const UIProvider = ({ children }) => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => setIsLoginModalOpen(false);
 
   return (
-    <UiContext.Provider
+    <UIContext.Provider
       value={{
         isLoginModalOpen,
         openLoginModal,
@@ -17,8 +17,8 @@ export const UiProvider = ({ children }) => {
       }}
     >
       {children}
-    </UiContext.Provider>
+    </UIContext.Provider>
   );
 };
 
-export const useUI = () => useContext(UiContext);
+export const useUI = () => useContext(UIContext);

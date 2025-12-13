@@ -5,7 +5,7 @@ import { MapPin, User, Heart, ShoppingCart, Sun, Moon } from "lucide-react";
 import { useCart } from "../../context/CartContext.jsx";
 import { useTheme } from "../../hook/useTheme.js";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { useUI } from "../../context/UiContext.jsx";
+import { useUI } from "../../context/UIContext.jsx";
 import LoginModal from "../shop/LoginModal.jsx";
 
 const ShopHeader = () => {

@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useCoupon } from "../context/CouponContext";
 import { useNotification } from "../context/NotificationContext";
-import { useUI } from "../context/UiContext";
+import { useUI } from "../context/UIContext";
 import CouponInput from "../components/checkout/CouponInput";
 import CheckoutSummary from "../components/checkout/CheckoutSummary";
 import { crearVentaApi } from "../api/shopApi";

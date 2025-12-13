@@ -26,13 +26,13 @@ const FinalizarCompraPage = () => {
 
  const handleConfirmarCompra = async () => {
   if (!cliente?.id) {
-  showNotification(
-    "info",
-    "Para finalizar la compra, primero completá tus datos."
-  );
-  openLoginModal(); // ✅ abre el modal automáticamente
-  return;
-}
+    showNotification(
+      "info",
+      "Para finalizar la compra, primero completá tus datos."
+    );
+    openLoginModal(); // ✅ abre el modal automáticamente
+    return;
+  }
 
   if (!itemsForBackend || itemsForBackend.length === 0) {
     showNotification("warning", "Tu carrito está vacío.");
@@ -56,6 +56,20 @@ const FinalizarCompraPage = () => {
     // ✅ compatibilidad: axios response o data directo
     const data = resp?.data ?? resp;
 
+    // ✅ SIEMPRE limpiamos el cupón aplicado en el checkout (evita "descuento fantasma")
+    limpiarCupon();
+
+    // ✅ Si el backend realmente aplicó descuento, invalidamos el cupón activo cacheado
+    const backendAplicoCupon =
+      !!data?.codigo_cupon && Number(data?.descuento ?? 0) > 0;
+
+    if (backendAplicoCupon) {
+      invalidateCuponActivo({
+        markBlocked: true,
+        reason: "Cupón ya utilizado.",
+      });
+    }
+
     clearCart();
     showNotification("success", "Compra registrada correctamente.");
 
@@ -76,6 +90,7 @@ const FinalizarCompraPage = () => {
     setLoading(false);
   }
 };
+
 
 
 

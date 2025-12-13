@@ -12,7 +12,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { CouponProvider } from "./context/CouponContext.jsx";
 import { NotificationProvider } from "./context/NotificationContext.jsx";
 import ConfirmacionCompraPage from "./pages/ConfirmacionCompraPage.jsx"; // 👈 NUEVO
-import { UIProvider } from "./context/UiContext.jsx";
+import { UIProvider } from "./context/UIContext.jsx";
 import CartDrawer from "./components/cart/CartDrawer.jsx";
 
 const App = () => {

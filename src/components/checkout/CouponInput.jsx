@@ -78,46 +78,66 @@ const CouponInput = () => {
   const codigoSugerido = cuponActivo?.codigo || "";
 
   const handleAplicarCupon = async () => {
-    if (!cliente?.id) {
-      showNotification("warning", "Primero completá la identificación del comprador.");
-      return;
-    }
+  if (!cliente?.id) {
+    showNotification("warning", "Primero completá la identificación del comprador.");
+    return;
+  }
 
-    if (!codigoSugerido) {
-      showNotification("info", "No hay cupón disponible para aplicar.");
-      return;
-    }
+  if (!codigoSugerido) {
+    showNotification("info", "No hay cupón disponible para aplicar.");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      const resp = await validarCuponApi({
-        cliente_id: cliente.id,
-        codigo: codigoSugerido,
-        total_bruto: totalBruto,
+  setLoading(true);
+
+  try {
+    const resp = await validarCuponApi({
+      cliente_id: cliente.id,
+      codigo: codigoSugerido,
+      total_bruto: totalBruto,
+    });
+
+    // ✅ Soporta ambos formatos: axios response o data directo
+    const data = resp?.data ?? resp;
+
+    if (data?.valido) {
+      const descuento = Number(data?.descuento ?? data?.descuento_monto ?? 0);
+      const totalConDesc = Number(
+        data?.total_con_descuento ?? data?.total_con_descuento ?? totalBruto
+      );
+
+      // ✅ Preferimos el cupón que devuelve el backend (más completo)
+      const cuponFinal =
+        data?.cupon ?? {
+          codigo: codigoSugerido,
+          descuento_porcentaje: cuponActivo?.descuento_porcentaje ?? 0,
+        };
+
+      aplicarCupon({
+        cupon: cuponFinal,
+        descuento_monto: descuento,
+        total_con_descuento: totalConDesc,
       });
 
-      if (resp?.valido) {
-        aplicarCupon({
-          cupon: { codigo: codigoSugerido, descuento_porcentaje: cuponActivo?.descuento_porcentaje ?? 0 },
-          descuento_monto: resp.descuento,
-          total_con_descuento: resp.total_con_descuento,
-        });
-
-        showNotification("success", `Cupón aplicado: -$${Number(resp.descuento ?? 0).toLocaleString("es-AR")}`);
-      } else {
-        limpiarCupon();
-        showNotification("warning", resp?.error || "Cupón no válido.");
-      }
-    } catch (err) {
-      const msg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        "No se pudo validar el cupón.";
-      showNotification("error", msg);
-    } finally {
-      setLoading(false);
+      showNotification(
+        "success",
+        `Cupón aplicado: -$${descuento.toLocaleString("es-AR")}`
+      );
+    } else {
+      limpiarCupon();
+      showNotification("warning", data?.error || "Cupón no válido.");
     }
-  };
+  } catch (err) {
+    const msg =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      "No se pudo validar el cupón.";
+    showNotification("error", msg);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div

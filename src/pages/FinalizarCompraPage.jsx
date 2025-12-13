@@ -11,11 +11,12 @@ import CheckoutSummary from "../components/checkout/CheckoutSummary";
 import { crearVentaApi } from "../api/shopApi";
 import ShopHeader from "../components/layout/ShopHeader";
 
+
 const FinalizarCompraPage = () => {
   const { cliente } = useAuth();
   // 🔧 usamos totalAmount en lugar de totalBruto
   const { itemsForBackend, totalAmount, clearCart } = useCart();
-  const { cupon, totalConDescuento } = useCoupon();
+  const { cupon, totalConDescuento, limpiarCupon } = useCoupon();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
   const { openLoginModal } = useUI();

@@ -12,33 +12,35 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { CouponProvider } from "./context/CouponContext.jsx";
 import { NotificationProvider } from "./context/NotificationContext.jsx";
 import ConfirmacionCompraPage from "./pages/ConfirmacionCompraPage.jsx"; // 👈 NUEVO
-
+import { UIProvider } from "./context/UiContext.jsx";
 import CartDrawer from "./components/cart/CartDrawer.jsx";
 
 const App = () => {
   return (
-    <NotificationProvider>
-      <AuthProvider>
-        <CouponProvider>
-          <CartProvider>
-            {/* Drawer del carrito siempre montado, con acceso a los contexts */}
-            <CartDrawer />
+    <UIProvider>
+      <NotificationProvider>
+        <AuthProvider>
+          <CouponProvider>
+            <CartProvider>
+              {/* Drawer del carrito siempre montado, con acceso a los contexts */}
+              <CartDrawer />
 
-            <Routes>
-              <Route path="/" element={<ShopHome />} />
-              <Route path="/login" element={<LoginClientePage />} />
-              <Route path="/producto/:id" element={<ProductDetail />} />
-              <Route path="/checkout" element={<FinalizarCompraPage />} />
-              <Route path="/mis-cupones" element={<MisCuponesPage />} />
-              <Route
-                path="/shop/confirmacion"
-                element={<ConfirmacionCompraPage />}
-              />
-            </Routes>
-          </CartProvider>
-        </CouponProvider>
-      </AuthProvider>
-    </NotificationProvider>
+              <Routes>
+                <Route path="/" element={<ShopHome />} />
+                <Route path="/login" element={<LoginClientePage />} />
+                <Route path="/producto/:id" element={<ProductDetail />} />
+                <Route path="/checkout" element={<FinalizarCompraPage />} />
+                <Route path="/mis-cupones" element={<MisCuponesPage />} />
+                <Route
+                  path="/shop/confirmacion"
+                  element={<ConfirmacionCompraPage />}
+                />
+              </Routes>
+            </CartProvider>
+          </CouponProvider>
+        </AuthProvider>
+      </NotificationProvider>
+    </UIProvider>
   );
 };
 

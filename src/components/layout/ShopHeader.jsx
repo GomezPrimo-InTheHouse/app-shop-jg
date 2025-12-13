@@ -5,6 +5,7 @@ import { MapPin, User, Heart, ShoppingCart, Sun, Moon } from "lucide-react";
 import { useCart } from "../../context/CartContext.jsx";
 import { useTheme } from "../../hook/useTheme.js";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useUI } from "../../context/UiContext.jsx";
 import LoginModal from "../shop/LoginModal.jsx";
 
 const ShopHeader = () => {
@@ -12,7 +13,8 @@ const ShopHeader = () => {
   const { theme, toggleTheme } = useTheme();
   const { cliente, logout } = useAuth();
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  // const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { isLoginModalOpen, openLoginModal, closeLoginModal } = useUI();
 
   const formatPrice = (value) =>
     Number(value ?? 0).toLocaleString("es-AR", {
@@ -147,9 +149,10 @@ const ShopHeader = () => {
       </header>
 
       {/* Modal de login */}
+      {/* Modal de login */}
       <LoginModal
         isOpen={isLoginModalOpen && !cliente}
-        onClose={() => setIsLoginModalOpen(false)}
+        onClose={closeLoginModal}
       />
     </>
   );

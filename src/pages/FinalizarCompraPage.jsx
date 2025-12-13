@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useCoupon } from "../context/CouponContext";
 import { useNotification } from "../context/NotificationContext";
+import { useUI } from "../context/UiContext";
 import CouponInput from "../components/checkout/CouponInput";
 import CheckoutSummary from "../components/checkout/CheckoutSummary";
 import { crearVentaApi } from "../api/shopApi";
@@ -17,15 +18,21 @@ const FinalizarCompraPage = () => {
   const { cupon, totalConDescuento } = useCoupon();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
+  const { openLoginModal } = useUI();
+
 
   const [montoAbonado] = useState(0);
   const [loading, setLoading] = useState(false);
 
  const handleConfirmarCompra = async () => {
-  if (!cliente) {
-    showNotification("warning", "Tenés que iniciar sesión para finalizar la compra.");
-    return;
-  }
+  if (!cliente?.id) {
+  showNotification(
+    "info",
+    "Para finalizar la compra, primero completá tus datos."
+  );
+  openLoginModal(); // ✅ abre el modal automáticamente
+  return;
+}
 
   if (!itemsForBackend || itemsForBackend.length === 0) {
     showNotification("warning", "Tu carrito está vacío.");

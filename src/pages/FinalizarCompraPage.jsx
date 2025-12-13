@@ -21,13 +21,13 @@ const FinalizarCompraPage = () => {
   const [montoAbonado] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const handleConfirmarCompra = async () => {
+ const handleConfirmarCompra = async () => {
   if (!cliente) {
     showNotification("warning", "Tenés que iniciar sesión para finalizar la compra.");
     return;
   }
 
-  if (itemsForBackend.length === 0) {
+  if (!itemsForBackend || itemsForBackend.length === 0) {
     showNotification("warning", "Tu carrito está vacío.");
     return;
   }
@@ -35,7 +35,6 @@ const FinalizarCompraPage = () => {
   setLoading(true);
 
   try {
-    // Armamos payload sin enviar codigo_cupon nulo
     const payload = {
       cliente_id: cliente.id,
       items: itemsForBackend,
@@ -43,23 +42,19 @@ const FinalizarCompraPage = () => {
       estado_nombre: "PENDIENTE_PAGO",
     };
 
-    if (cupon?.codigo) {
-      payload.codigo_cupon = cupon.codigo;
-    }
+    if (cupon?.codigo) payload.codigo_cupon = cupon.codigo;
 
     const resp = await crearVentaApi(payload);
+
+    // ✅ compatibilidad: axios response o data directo
+    const data = resp?.data ?? resp;
 
     clearCart();
     showNotification("success", "Compra registrada correctamente.");
 
+    // ✅ pasamos data completo (venta, detalles, totales)
     navigate("/shop/confirmacion", {
-      state: {
-        venta: resp.venta,
-        detalles: resp.detalles,
-        total_bruto: resp.total_bruto,
-        descuento: resp.descuento,
-        total_final: resp.total_final,
-      },
+      state: data,
     });
   } catch (error) {
     console.error("Error creando venta", error);
@@ -74,6 +69,7 @@ const FinalizarCompraPage = () => {
     setLoading(false);
   }
 };
+
 
 
   // 🔧 fallback seguro: si no hay cupón ni total, usamos 0

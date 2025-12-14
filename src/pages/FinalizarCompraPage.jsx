@@ -27,11 +27,8 @@ const FinalizarCompraPage = () => {
 
  const handleConfirmarCompra = async () => {
   if (!cliente?.id) {
-    showNotification(
-      "info",
-      "Para finalizar la compra, primero completá tus datos."
-    );
-    openLoginModal(); // ✅ abre el modal automáticamente
+    showNotification("info", "Para finalizar la compra, primero completá tus datos.");
+    openLoginModal();
     return;
   }
 
@@ -42,42 +39,35 @@ const FinalizarCompraPage = () => {
 
   setLoading(true);
 
+  // ✅ armamos payload una sola vez (así sabemos si se intentó cupón)
+  const payload = {
+    cliente_id: cliente.id,
+    items: itemsForBackend,
+    monto_abonado: montoAbonado,
+    estado_nombre: "PENDIENTE_PAGO",
+    ...(cupon?.codigo ? { codigo_cupon: cupon.codigo } : {}),
+  };
+
   try {
-    const payload = {
-      cliente_id: cliente.id,
-      items: itemsForBackend,
-      monto_abonado: montoAbonado,
-      estado_nombre: "PENDIENTE_PAGO",
-    };
-
-    if (cupon?.codigo) payload.codigo_cupon = cupon.codigo;
-
     const resp = await crearVentaApi(payload);
-
-    // ✅ compatibilidad: axios response o data directo
     const data = resp?.data ?? resp;
 
-    // ✅ SIEMPRE limpiamos el cupón aplicado en el checkout (evita "descuento fantasma")
-    limpiarCupon();
-
-    // ✅ Si el backend realmente aplicó descuento, invalidamos el cupón activo cacheado
-    const backendAplicoCupon =
-      !!data?.codigo_cupon && Number(data?.descuento ?? 0) > 0;
-
-    if (backendAplicoCupon) {
-      invalidateCuponActivo({
+    // ✅ PASO 2 (ACÁ): si se intentó comprar con cupón, invalidamos la sugerencia del AuthContext
+    // Esto evita que vuelva a aparecer el 5% como "disponible" en el siguiente checkout.
+    if (payload.codigo_cupon) {
+      invalidateCuponActivo?.({
         markBlocked: true,
-        reason: "Cupón ya utilizado.",
+        reason:
+          Number(data?.descuento ?? 0) > 0
+            ? "Cupón utilizado."
+            : "Cupón no aplicable / ya usado.",
       });
     }
 
     clearCart();
     showNotification("success", "Compra registrada correctamente.");
 
-    // ✅ pasamos data completo (venta, detalles, totales)
-    navigate("/shop/confirmacion", {
-      state: data,
-    });
+    navigate("/shop/confirmacion", { state: data });
   } catch (error) {
     console.error("Error creando venta", error);
 
@@ -88,6 +78,8 @@ const FinalizarCompraPage = () => {
 
     showNotification("error", backendMsg);
   } finally {
+    // ✅ SIEMPRE limpiamos el cupón aplicado en checkout
+    limpiarCupon?.();
     setLoading(false);
   }
 };

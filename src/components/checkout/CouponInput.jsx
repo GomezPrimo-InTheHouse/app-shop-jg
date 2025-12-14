@@ -59,6 +59,147 @@
 // };
 
 // export default CouponInput;
+// import { useState } from "react";
+// import { useAuth } from "../../context/AuthContext";
+// import { useCart } from "../../context/CartContext";
+// import { useCoupon } from "../../context/CouponContext";
+// import { useNotification } from "../../context/NotificationContext";
+// import { validarCuponApi } from "../../api/shopApi";
+
+// const CouponInput = () => {
+//   const { cliente, cuponActivo, cuponFlags } = useAuth();
+//   const { totalAmount } = useCart();
+//   const { aplicarCupon, limpiarCupon, cupon } = useCoupon();
+//   const { showNotification } = useNotification();
+
+//   const [loading, setLoading] = useState(false);
+
+//   const totalBruto = totalAmount ?? 0;
+//   const codigoSugerido = cuponActivo?.codigo || "";
+
+//   const handleAplicarCupon = async () => {
+//   if (!cliente?.id) {
+//     showNotification("warning", "Primero completá la identificación del comprador.");
+//     return;
+//   }
+
+//   if (!codigoSugerido) {
+//     showNotification("info", "No hay cupón disponible para aplicar.");
+//     return;
+//   }
+
+//   setLoading(true);
+
+//   try {
+//     const resp = await validarCuponApi({
+//       cliente_id: cliente.id,
+//       codigo: codigoSugerido,
+//       total_bruto: totalBruto,
+//     });
+
+//     // ✅ Soporta ambos formatos: axios response o data directo
+//     const data = resp?.data ?? resp;
+
+//     if (data?.valido) {
+//       const descuento = Number(data?.descuento ?? data?.descuento_monto ?? 0);
+//       const totalConDesc = Number(
+//         data?.total_con_descuento ?? data?.total_con_descuento ?? totalBruto
+//       );
+
+//       // ✅ Preferimos el cupón que devuelve el backend (más completo)
+//       const cuponFinal =
+//         data?.cupon ?? {
+//           codigo: codigoSugerido,
+//           descuento_porcentaje: cuponActivo?.descuento_porcentaje ?? 0,
+//         };
+
+//       aplicarCupon({
+//         cupon: cuponFinal,
+//         descuento_monto: descuento,
+//         total_con_descuento: totalConDesc,
+//       });
+
+//       showNotification(
+//         "success",
+//         `Cupón aplicado: -$${descuento.toLocaleString("es-AR")}`
+//       );
+//     } else {
+//       limpiarCupon();
+//       showNotification("warning", data?.error || "Cupón no válido.");
+//     }
+//   } catch (err) {
+//     const msg =
+//       err?.response?.data?.error ||
+//       err?.response?.data?.message ||
+//       "No se pudo validar el cupón.";
+//     showNotification("error", msg);
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+
+//   return (
+//     <div
+//       className="rounded-xl border border-gray-200 dark:border-gray-800
+//                  bg-white/70 dark:bg-gray-950/70 backdrop-blur-sm p-4 space-y-2"
+//     >
+//       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+//         Cupón
+//       </h3>
+
+//       {/* Caso: cupón bloqueado */}
+//       {cuponFlags?.cupon_bloqueado && !cuponActivo && (
+//         <p className="text-xs text-gray-600 dark:text-gray-400">
+//           {cuponFlags?.cupon_block_reason ||
+//             "Ya utilizaste tu beneficio. Volvé a intentarlo más adelante."}
+//         </p>
+//       )}
+
+//       {/* Caso: cupón sugerido */}
+//       {cuponActivo?.codigo ? (
+//         <div className="text-xs text-gray-700 dark:text-gray-300 space-y-1">
+//           <p>
+//             Cupón disponible:{" "}
+//             <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+//               {cuponActivo.codigo}
+//             </span>{" "}
+//             ({cuponActivo.descuento_porcentaje}% OFF)
+//           </p>
+
+//           {cuponActivo.valido_hasta && (
+//             <p className="text-[11px] text-gray-500 dark:text-gray-400">
+//               Válido hasta:{" "}
+//               {new Date(cuponActivo.valido_hasta).toLocaleString("es-AR")}
+//             </p>
+//           )}
+
+//           <button
+//             type="button"
+//             onClick={handleAplicarCupon}
+//             disabled={loading}
+//             className="mt-2 inline-flex items-center justify-center rounded-full
+//                        bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50
+//                        px-4 py-2 text-xs font-semibold text-white transition-colors"
+//           >
+//             {loading ? "Validando..." : cupon?.codigo ? "Re-aplicar cupón" : "Aplicar cupón"}
+//           </button>
+//         </div>
+//       ) : (
+//         !cuponFlags?.cupon_bloqueado && (
+//           <p className="text-xs text-gray-600 dark:text-gray-400">
+//             No tenés un cupón disponible por ahora.
+//           </p>
+//         )
+//       )}
+//     </div>
+//   );
+// };
+
+// export default CouponInput;
+
+
+// src/components/checkout/CouponInput.jsx
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
@@ -69,95 +210,110 @@ import { validarCuponApi } from "../../api/shopApi";
 const CouponInput = () => {
   const { cliente, cuponActivo, cuponFlags } = useAuth();
   const { totalAmount } = useCart();
-  const { aplicarCupon, limpiarCupon, cupon } = useCoupon();
+  const { aplicarCupon, limpiarCupon, cupon, hasCuponAplicado } = useCoupon();
   const { showNotification } = useNotification();
 
   const [loading, setLoading] = useState(false);
 
-  const totalBruto = totalAmount ?? 0;
+  const totalBruto = Number(totalAmount ?? 0);
   const codigoSugerido = cuponActivo?.codigo || "";
 
   const handleAplicarCupon = async () => {
-  if (!cliente?.id) {
-    showNotification("warning", "Primero completá la identificación del comprador.");
-    return;
-  }
+    if (!cliente?.id) {
+      showNotification("warning", "Primero completá la identificación del comprador.");
+      return;
+    }
 
-  if (!codigoSugerido) {
-    showNotification("info", "No hay cupón disponible para aplicar.");
-    return;
-  }
+    if (!codigoSugerido) {
+      showNotification("info", "No hay cupón disponible para aplicar.");
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const resp = await validarCuponApi({
-      cliente_id: cliente.id,
-      codigo: codigoSugerido,
-      total_bruto: totalBruto,
-    });
-
-    // ✅ Soporta ambos formatos: axios response o data directo
-    const data = resp?.data ?? resp;
-
-    if (data?.valido) {
-      const descuento = Number(data?.descuento ?? data?.descuento_monto ?? 0);
-      const totalConDesc = Number(
-        data?.total_con_descuento ?? data?.total_con_descuento ?? totalBruto
-      );
-
-      // ✅ Preferimos el cupón que devuelve el backend (más completo)
-      const cuponFinal =
-        data?.cupon ?? {
-          codigo: codigoSugerido,
-          descuento_porcentaje: cuponActivo?.descuento_porcentaje ?? 0,
-        };
-
-      aplicarCupon({
-        cupon: cuponFinal,
-        descuento_monto: descuento,
-        total_con_descuento: totalConDesc,
+    try {
+      const resp = await validarCuponApi({
+        cliente_id: cliente.id,
+        codigo: codigoSugerido,
+        total_bruto: totalBruto,
       });
 
-      showNotification(
-        "success",
-        `Cupón aplicado: -$${descuento.toLocaleString("es-AR")}`
-      );
-    } else {
-      limpiarCupon();
-      showNotification("warning", data?.error || "Cupón no válido.");
-    }
-  } catch (err) {
-    const msg =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      "No se pudo validar el cupón.";
-    showNotification("error", msg);
-  } finally {
-    setLoading(false);
-  }
-};
+      const data = resp?.data ?? resp;
 
+      if (data?.valido) {
+        const descuento = Number(data?.descuento ?? data?.descuento_monto ?? 0);
+        const totalConDesc = Number(data?.total_con_descuento ?? totalBruto);
+
+        // Preferimos el cupón del backend (más completo)
+        const cuponFinal =
+          data?.cupon ?? {
+            codigo: codigoSugerido,
+            descuento_porcentaje: cuponActivo?.descuento_porcentaje ?? 0,
+          };
+
+        aplicarCupon({
+          cupon: cuponFinal,
+          descuento_monto: descuento,
+          total_con_descuento: totalConDesc,
+        });
+
+        showNotification("success", `Cupón aplicado: -$${descuento.toLocaleString("es-AR")}`);
+      } else {
+        limpiarCupon();
+        showNotification("warning", data?.error || "Cupón no válido.");
+      }
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "No se pudo validar el cupón.";
+      showNotification("error", msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuitarCupon = () => {
+    limpiarCupon();
+    showNotification("info", "Cupón quitado.");
+  };
 
   return (
-    <div
-      className="rounded-xl border border-gray-200 dark:border-gray-800
-                 bg-white/70 dark:bg-gray-950/70 backdrop-blur-sm p-4 space-y-2"
-    >
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/70 backdrop-blur-sm p-4 space-y-2">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
         Cupón
       </h3>
 
+      {/* Cupón aplicado (Checkout) */}
+      {hasCuponAplicado && (
+        <div className="text-xs text-gray-700 dark:text-gray-300 space-y-2">
+          <p>
+            ✅ Cupón aplicado:{" "}
+            <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+              {cupon.codigo}
+            </span>
+          </p>
+
+          <button
+            type="button"
+            onClick={handleQuitarCupon}
+            className="inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 px-4 py-2 text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+          >
+            Quitar cupón
+          </button>
+        </div>
+      )}
+
       {/* Caso: cupón bloqueado */}
-      {cuponFlags?.cupon_bloqueado && !cuponActivo && (
+      {!hasCuponAplicado && cuponFlags?.cupon_bloqueado && !cuponActivo && (
         <p className="text-xs text-gray-600 dark:text-gray-400">
           {cuponFlags?.cupon_block_reason ||
             "Ya utilizaste tu beneficio. Volvé a intentarlo más adelante."}
         </p>
       )}
 
-      {/* Caso: cupón sugerido */}
-      {cuponActivo?.codigo ? (
+      {/* Caso: cupón sugerido (solo sugerencia, no aplicado) */}
+      {!hasCuponAplicado && cuponActivo?.codigo ? (
         <div className="text-xs text-gray-700 dark:text-gray-300 space-y-1">
           <p>
             Cupón disponible:{" "}
@@ -169,8 +325,7 @@ const CouponInput = () => {
 
           {cuponActivo.valido_hasta && (
             <p className="text-[11px] text-gray-500 dark:text-gray-400">
-              Válido hasta:{" "}
-              {new Date(cuponActivo.valido_hasta).toLocaleString("es-AR")}
+              Válido hasta: {new Date(cuponActivo.valido_hasta).toLocaleString("es-AR")}
             </p>
           )}
 
@@ -178,14 +333,13 @@ const CouponInput = () => {
             type="button"
             onClick={handleAplicarCupon}
             disabled={loading}
-            className="mt-2 inline-flex items-center justify-center rounded-full
-                       bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50
-                       px-4 py-2 text-xs font-semibold text-white transition-colors"
+            className="mt-2 inline-flex items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 text-xs font-semibold text-white transition-colors"
           >
-            {loading ? "Validando..." : cupon?.codigo ? "Re-aplicar cupón" : "Aplicar cupón"}
+            {loading ? "Validando..." : "Aplicar cupón"}
           </button>
         </div>
       ) : (
+        !hasCuponAplicado &&
         !cuponFlags?.cupon_bloqueado && (
           <p className="text-xs text-gray-600 dark:text-gray-400">
             No tenés un cupón disponible por ahora.

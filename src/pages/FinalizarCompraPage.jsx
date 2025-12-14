@@ -24,69 +24,71 @@ const FinalizarCompraPage = () => {
   const [montoAbonado] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const handleConfirmarCompra = async () => {
-    if (!cliente?.id) {
-      showNotification("info", "Para finalizar la compra, primero completá tus datos.");
-      openLoginModal();
-      return;
-    }
+  const LS_LAST_ORDER = "jg_shop_last_order"; // ✅ arriba del componente / archivo
 
-    if (!itemsForBackend || itemsForBackend.length === 0) {
-      showNotification("warning", "Tu carrito está vacío.");
-      return;
-    }
+const handleConfirmarCompra = async () => {
+  if (!cliente?.id) {
+    showNotification("info", "Para finalizar la compra, primero completá tus datos.");
+    openLoginModal();
+    return;
+  }
 
-    setLoading(true);
+  if (!itemsForBackend || itemsForBackend.length === 0) {
+    showNotification("warning", "Tu carrito está vacío.");
+    return;
+  }
 
-    const payload = {
-      cliente_id: cliente.id,
-      items: itemsForBackend,
-      monto_abonado: montoAbonado,
-      estado_nombre: "PENDIENTE_PAGO",
-      ...(cupon?.codigo ? { codigo_cupon: cupon.codigo } : {}),
-    };
+  setLoading(true);
 
-    try {
-      const resp = await crearVentaApi(payload);
-      const data = resp?.data ?? resp;
-
-      // ✅ Guardar SIEMPRE el último pedido con timestamp (para evitar mostrar uno viejo)
-      const saved = { ...data, saved_at: Date.now() };
-      try {
-        localStorage.setItem(LS_LAST_ORDER, JSON.stringify(saved));
-      } catch {}
-
-      // ✅ Si se intentó usar cupón, invalido la sugerencia para que no “moleste”
-      if (payload.codigo_cupon) {
-        invalidateCuponActivo?.({
-          markBlocked: Number(data?.descuento ?? 0) > 0,
-          reason:
-            Number(data?.descuento ?? 0) > 0
-              ? "Cupón utilizado."
-              : "Cupón no aplicable / ya usado.",
-        });
-      }
-
-      clearCart();
-      showNotification("success", "Compra registrada correctamente.");
-
-      // ✅ Pasamos también saved_at por state para que confirmación prefiera esto
-      navigate("/shop/confirmacion", { state: saved });
-    } catch (error) {
-      console.error("Error creando venta", error);
-
-      const backendMsg =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        "No se pudo registrar la compra.";
-
-      showNotification("error", backendMsg);
-    } finally {
-      // ✅ pase lo que pase: se limpia cupón aplicado en checkout
-      limpiarCupon?.();
-      setLoading(false);
-    }
+  const payload = {
+    cliente_id: cliente.id,
+    items: itemsForBackend,
+    monto_abonado: montoAbonado,
+    estado_nombre: "PENDIENTE_PAGO",
+    ...(cupon?.codigo ? { codigo_cupon: cupon.codigo } : {}),
   };
+
+  try {
+    const resp = await crearVentaApi(payload);
+    const data = resp?.data ?? resp;
+
+    // ✅ Guardar SIEMPRE el último pedido con timestamp (evita mostrar uno viejo)
+    const saved = { ...data, saved_at: Date.now() };
+    try {
+      localStorage.setItem(LS_LAST_ORDER, JSON.stringify(saved));
+    } catch {}
+
+    // ✅ Si se intentó usar cupón, invalidamos la sugerencia del Auth
+    if (payload.codigo_cupon) {
+      const backendAplicoDescuento = Number(data?.descuento ?? 0) > 0;
+
+      invalidateCuponActivo?.({
+        markBlocked: backendAplicoDescuento,
+        reason: backendAplicoDescuento
+          ? "Cupón utilizado."
+          : "Cupón no aplicable / ya usado.",
+      });
+    }
+
+    clearCart();
+    showNotification("success", "Compra registrada correctamente.");
+
+    // ✅ Pasamos saved (incluye saved_at) en el state
+    navigate("/shop/confirmacion", { state: saved });
+  } catch (error) {
+    console.error("Error creando venta", error);
+
+    const backendMsg =
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      "No se pudo registrar la compra.";
+
+    showNotification("error", backendMsg);
+  } finally {
+    limpiarCupon?.();
+    setLoading(false);
+  }
+};
 
   const totalMostrado = totalConDescuento ?? totalAmount ?? 0;
 

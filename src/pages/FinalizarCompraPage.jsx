@@ -13,7 +13,7 @@ import ShopHeader from "../components/layout/ShopHeader";
 
 
 const FinalizarCompraPage = () => {
-  const { cliente } = useAuth();
+  const { cliente, invalidateCuponActivo } = useAuth();
   // 🔧 usamos totalAmount en lugar de totalBruto
   const { itemsForBackend, totalAmount, clearCart } = useCart();
   const { cupon, totalConDescuento, limpiarCupon } = useCoupon();
@@ -39,7 +39,6 @@ const FinalizarCompraPage = () => {
 
   setLoading(true);
 
-  // ✅ armamos payload una sola vez (así sabemos si se intentó cupón)
   const payload = {
     cliente_id: cliente.id,
     items: itemsForBackend,
@@ -52,11 +51,15 @@ const FinalizarCompraPage = () => {
     const resp = await crearVentaApi(payload);
     const data = resp?.data ?? resp;
 
-    // ✅ PASO 2 (ACÁ): si se intentó comprar con cupón, invalidamos la sugerencia del AuthContext
-    // Esto evita que vuelva a aparecer el 5% como "disponible" en el siguiente checkout.
+    // ✅ Guardar el último pedido (por si el usuario refresca confirmación)
+    try {
+      localStorage.setItem(LS_LAST_ORDER, JSON.stringify(data));
+    } catch {}
+
+    // ✅ Si se intentó usar cupón, invalido la sugerencia del Auth para que no “moleste”
     if (payload.codigo_cupon) {
       invalidateCuponActivo?.({
-        markBlocked: true,
+        markBlocked: Number(data?.descuento ?? 0) > 0,
         reason:
           Number(data?.descuento ?? 0) > 0
             ? "Cupón utilizado."
@@ -78,7 +81,7 @@ const FinalizarCompraPage = () => {
 
     showNotification("error", backendMsg);
   } finally {
-    // ✅ SIEMPRE limpiamos el cupón aplicado en checkout
+    // ✅ pase lo que pase: se limpia el cupón aplicado en checkout
     limpiarCupon?.();
     setLoading(false);
   }

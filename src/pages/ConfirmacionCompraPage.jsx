@@ -191,206 +191,158 @@
 // export default ConfirmacionCompraPage;
 
 // src/pages/ConfirmacionCompraPage.jsx
-import { useEffect, useMemo } from "react";
-import { useLocation, Link } from "react-router-dom";
-import ShopHeader from "../components/layout/ShopHeader.jsx";
+// src/pages/ConfirmacionCompraPage.jsx
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useCoupon } from "../context/CouponContext";
 
 const LS_LAST_ORDER = "jg_shop_last_order";
 
-const ConfirmacionCompraPage = () => {
-  const location = useLocation();
-
-  // ✅ fuente primaria: lo que viene del backend al navegar (state)
-  const state = location.state || {};
-
-  // soporta: state = data (backend)  OR  state = { venta, ... }
-  // pero preferimos siempre el shape "backend response": { venta, detalles, total_bruto, descuento, total_final, codigo_cupon }
-  const fromState = useMemo(() => {
-    if (state?.venta) return state;                 // ya viene shape correcto
-    if (state?.data?.venta) return state.data;     // por error: { data: backend }
-    if (state?.resp?.data?.venta) return state.resp.data; // por error: { resp: axiosResponse }
-    return null;
-  }, [state]);
-
-  // ✅ fallback desde localStorage SOLO si no hay state
-  const fromStorage = useMemo(() => {
-    if (fromState) return null; // si hay state, ignoramos storage para evitar mezclas
-    try {
-      const raw = localStorage.getItem(LS_LAST_ORDER);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  }, [fromState]);
-
-  const payload = fromState || fromStorage || null;
-
-  const venta = payload?.venta ?? null;
-  const detalles = Array.isArray(payload?.detalles) ? payload.detalles : [];
-
-  // ✅ SOLO CAMPOS BACKEND (sin alias del front)
-  const total_bruto = payload?.total_bruto ?? null;
-  const descuento = payload?.descuento ?? 0;
-  const total_final = payload?.total_final ?? venta?.total ?? null;
-  const codigo_cupon = payload?.codigo_cupon ?? null;
-
-  const formatPrice = (value) =>
-    Number(value ?? 0).toLocaleString("es-AR", {
-      style: "currency",
-      currency: "ARS",
-      maximumFractionDigits: 0,
-    });
-
-  const tieneDatos = !!venta?.id;
-
-  // ✅ si vino state (backend), lo persistimos como "última compra"
-  // (y sobrescribimos cualquier cosa vieja)
-  useEffect(() => {
-    if (!fromState?.venta?.id) return;
-
-    const save = {
-      venta: fromState.venta,
-      detalles: Array.isArray(fromState.detalles) ? fromState.detalles : [],
-      total_bruto: fromState.total_bruto ?? null,
-      descuento: fromState.descuento ?? 0,
-      total_final: fromState.total_final ?? fromState.venta?.total ?? null,
-      codigo_cupon: fromState.codigo_cupon ?? null,
-    };
-
-    localStorage.setItem(LS_LAST_ORDER, JSON.stringify(save));
-  }, [fromState]);
-
-  return (
-    <div
-      className="min-h-screen flex flex-col
-                 bg-gray-100 dark:bg-gray-900
-                 text-gray-900 dark:text-gray-100
-                 transition-colors duration-500"
-    >
-      <ShopHeader />
-
-      <main className="flex-1">
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-          <h1 className="text-2xl font-semibold">
-            {tieneDatos ? "¡Gracias por tu compra!" : "Compra registrada"}
-          </h1>
-
-          {tieneDatos ? (
-            <section
-              className="rounded-2xl border border-gray-200 dark:border-gray-800
-                         bg-white/80 dark:bg-gray-950/80
-                         backdrop-blur-sm p-4 sm:p-6 space-y-4 shadow-lg"
-            >
-              {/* Resumen pedido */}
-              <div className="space-y-1 text-sm">
-                <p className="text-gray-700 dark:text-gray-300">
-                  Número de pedido: <span className="font-semibold">#{venta.id}</span>
-                </p>
-
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Fecha:{" "}
-                  {venta.fecha ? new Date(venta.fecha).toLocaleString("es-AR") : "-"}
-                </p>
-
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Canal: {venta.canal || "web_shop"}
-                </p>
-
-                {/* ✅ Cupón SOLO si backend lo confirma */}
-                {codigo_cupon && Number(descuento) > 0 && (
-                  <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                    Cupón aplicado: <span className="font-semibold">{codigo_cupon}</span>
-                  </p>
-                )}
-              </div>
-
-              {/* Totales (backend truth) */}
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(total_bruto ?? 0)}</span>
-                </div>
-
-                {Number(descuento) > 0 && (
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                    <span>Descuento</span>
-                    <span>-{formatPrice(descuento)}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between font-semibold text-base">
-                  <span>Total</span>
-                  <span>{formatPrice(total_final ?? 0)}</span>
-                </div>
-              </div>
-
-              {/* Detalle productos */}
-              {detalles.length > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
-                  <h2 className="text-sm font-semibold mb-2">Detalle de productos</h2>
-
-                  <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
-                    {detalles.map((d) => {
-                      const subtotalSeguro =
-                        d?.subtotal ??
-                        (Number(d?.precio_unitario ?? 0) * Number(d?.cantidad ?? 0));
-
-                      return (
-                        <li
-                          key={d.id ?? `${d.producto_id}-${d.cantidad}`}
-                          className="flex justify-between gap-2"
-                        >
-                          <span className="truncate">
-                            Producto #{d.producto_id}{" "}
-                            <span className="text-gray-500 dark:text-gray-400">
-                              x{d.cantidad}
-                            </span>
-                          </span>
-                          <span>{formatPrice(subtotalSeguro)}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-
-              <p className="text-xs text-gray-500 dark:text-gray-400 pt-2">
-                Nos vamos a comunicar con vos para coordinar el{" "}
-                <span className="font-semibold">método de pago y entrega</span>.
-              </p>
-            </section>
-          ) : (
-            <section
-              className="rounded-2xl border border-gray-200 dark:border-gray-800
-                         bg-white/80 dark:bg-gray-950/80
-                         backdrop-blur-sm p-4 sm:p-6 text-sm text-gray-700 dark:text-gray-300"
-            >
-              <p>Tu compra fue registrada, pero no encontramos el detalle completo en esta vista.</p>
-              <p className="text-xs mt-2 text-gray-500 dark:text-gray-400">
-                Si recargaste la página, puede haberse perdido el estado temporal.
-                Igual podés volver a la tienda o consultar por WhatsApp.
-              </p>
-            </section>
-          )}
-
-          <div className="flex gap-3">
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center
-                         rounded-full border border-gray-300 dark:border-gray-700
-                         bg-white dark:bg-gray-900
-                         px-4 py-2 text-sm font-medium
-                         text-gray-800 dark:text-gray-100
-                         hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-colors"
-            >
-              ← Volver a la tienda
-            </Link>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+const toNumber = (v, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
 };
 
-export default ConfirmacionCompraPage;
+const formatARS = (n) =>
+  toNumber(n, 0).toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  });
+
+export default function ConfirmacionCompraPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ Limpieza extra por seguridad (no afecta a los números mostrados porque usamos backend)
+  const { limpiarCupon } = useCoupon();
+  useEffect(() => {
+    limpiarCupon?.();
+  }, [limpiarCupon]);
+
+  const [order, setOrder] = useState(null);
+
+  useEffect(() => {
+    // 1) Preferimos state (flujo normal)
+    if (location.state) {
+      setOrder(location.state);
+      return;
+    }
+
+    // 2) Fallback si recargó la página
+    try {
+      const raw = localStorage.getItem(LS_LAST_ORDER);
+      if (raw) setOrder(JSON.parse(raw));
+    } catch {
+      setOrder(null);
+    }
+  }, [location.state]);
+
+  const view = useMemo(() => {
+    if (!order) return null;
+
+    // ✅ SOLO backend
+    const subtotal = toNumber(order.total_bruto ?? order.totalBruto ?? 0);
+    const descuento = toNumber(order.descuento ?? 0);
+    const total = toNumber(order.total_final ?? order.totalFinal ?? subtotal - descuento);
+
+    const numeroPedido = order?.venta?.id ?? order?.venta_id ?? order?.venta?.numero ?? null;
+    const fecha = order?.venta?.fecha ?? order?.venta?.created_at ?? order?.fecha ?? null;
+    const canal = order?.venta?.canal ?? order?.canal ?? "web_shop";
+
+    const detalles = Array.isArray(order?.detalles) ? order.detalles : [];
+
+    return { subtotal, descuento, total, numeroPedido, fecha, canal, detalles, codigoCupon: order?.codigo_cupon ?? null };
+  }, [order]);
+
+  if (!view) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10 text-gray-200">
+        <h1 className="text-2xl font-semibold">No encontramos el pedido</h1>
+        <p className="mt-2 text-sm text-gray-400">
+          Volvé a la tienda y realizá una compra para ver la confirmación.
+        </p>
+        <button
+          className="mt-6 rounded-full border border-white/10 px-5 py-2 text-sm hover:bg-white/5"
+          onClick={() => navigate("/")}
+        >
+          ← Volver a la tienda
+        </button>
+      </div>
+    );
+  }
+
+  const showDiscount = view.descuento > 0; // ✅ si backend devolvió 0, NO se muestra
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-10 text-gray-100">
+      <h1 className="text-3xl font-semibold mb-6">¡Gracias por tu compra!</h1>
+
+      <div className="rounded-2xl border border-white/10 bg-black/30 backdrop-blur p-6">
+        <div className="text-sm text-gray-300 space-y-1">
+          {view.numeroPedido && <p>Número de pedido: <span className="font-semibold">#{view.numeroPedido}</span></p>}
+          {view.fecha && <p>Fecha: {new Date(view.fecha).toLocaleString("es-AR")}</p>}
+          <p>Canal: {view.canal}</p>
+
+          {/* ✅ Si querés, mostrar el cupón SOLO si backend lo aplicó */}
+          {showDiscount && view.codigoCupon && (
+            <p className="text-emerald-400">Cupón aplicado: {view.codigoCupon}</p>
+          )}
+        </div>
+
+        <div className="my-6 border-t border-white/10" />
+
+        <div className="space-y-3 text-lg">
+          <div className="flex justify-between">
+            <span className="font-semibold">Subtotal</span>
+            <span>{formatARS(view.subtotal)}</span>
+          </div>
+
+          {showDiscount && (
+            <div className="flex justify-between text-emerald-400">
+              <span className="font-semibold">Descuento</span>
+              <span>-{formatARS(view.descuento)}</span>
+            </div>
+          )}
+
+          <div className="flex justify-between text-2xl font-bold pt-2">
+            <span>Total</span>
+            <span>{formatARS(view.total)}</span>
+          </div>
+        </div>
+
+        <div className="my-6 border-t border-white/10" />
+
+        <h3 className="text-lg font-semibold mb-3">Detalle de productos</h3>
+
+        <div className="space-y-2 text-sm text-gray-200">
+          {view.detalles.length === 0 ? (
+            <p className="text-gray-400">Sin detalles disponibles.</p>
+          ) : (
+            view.detalles.map((d, idx) => (
+              <div key={d?.id ?? idx} className="flex justify-between">
+                <span>
+                  {d?.producto_nombre ?? `Producto #${d?.producto_id ?? "?"}`}{" "}
+                  <span className="text-gray-400">x{d?.cantidad ?? 1}</span>
+                </span>
+                <span>{formatARS(d?.subtotal ?? (toNumber(d?.precio_unitario, 0) * toNumber(d?.cantidad, 1)))}</span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <p className="mt-6 text-sm text-gray-400">
+          Nos vamos a comunicar con vos para coordinar el método de pago y entrega.
+        </p>
+      </div>
+
+      <button
+        className="mt-8 rounded-full border border-white/10 px-6 py-3 text-sm hover:bg-white/5"
+        onClick={() => navigate("/")}
+      >
+        ← Volver a la tienda
+      </button>
+    </div>
+  );
+}
+

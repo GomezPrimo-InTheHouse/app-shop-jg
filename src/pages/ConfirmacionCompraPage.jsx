@@ -1,196 +1,3 @@
-// // src/pages/ConfirmacionCompraPage.jsx
-// import { useEffect, useMemo } from "react";
-// import { useLocation, Link } from "react-router-dom";
-// import ShopHeader from "../components/layout/ShopHeader.jsx";
-
-// const LS_LAST_ORDER = "jg_shop_last_order";
-
-// const ConfirmacionCompraPage = () => {
-//   const location = useLocation();
-
-//   // ✅ Soporta varios formatos de navegación:
-//   // - navigate(..., { state: { venta, detalles, ... } })
-//   // - navigate(..., { state: { data: { venta, ... } } }) (por error)
-//   // - navigate(..., { state: { resp } }) (axios response)
-//   const state = location.state || {};
-//   const fromState =
-//     state?.venta
-//       ? state
-//       : state?.data?.venta
-//       ? state.data
-//       : state?.resp?.data?.venta
-//       ? state.resp.data
-//       : null;
-
-//   // ✅ backup desde localStorage si state viene vacío (ej: recarga)
-//   const fromStorage = useMemo(() => {
-//     try {
-//       const raw = localStorage.getItem(LS_LAST_ORDER);
-//       return raw ? JSON.parse(raw) : null;
-//     } catch {
-//       return null;
-//     }
-//   }, []);
-
-//   const payload = fromState || fromStorage || {};
-
-//   const venta = payload?.venta ?? null;
-//   const detalles = payload?.detalles ?? [];
-//   const total_bruto = payload?.total_bruto ?? payload?.totalBruto ?? null;
-//   const descuento = payload?.descuento ?? payload?.descuentoMonto ?? 0;
-//   const total_final = payload?.total_final ?? payload?.totalFinal ?? venta?.total ?? null;
-
-//   const formatPrice = (value) =>
-//     Number(value ?? 0).toLocaleString("es-AR", {
-//       style: "currency",
-//       currency: "ARS",
-//       maximumFractionDigits: 0,
-//     });
-
-//   const tieneDatos = !!venta?.id;
-
-//   // ✅ guardamos la última compra para no perderla si el usuario recarga
-//   useEffect(() => {
-//     if (!tieneDatos) return;
-
-//     const save = {
-//       venta,
-//       detalles,
-//       total_bruto,
-//       descuento,
-//       total_final,
-//     };
-
-//     localStorage.setItem(LS_LAST_ORDER, JSON.stringify(save));
-//   }, [tieneDatos, venta, detalles, total_bruto, descuento, total_final]);
-
-//   return (
-//     <div
-//       className="min-h-screen flex flex-col
-//                  bg-gray-100 dark:bg-gray-900
-//                  text-gray-900 dark:text-gray-100
-//                  transition-colors duration-500"
-//     >
-//       <ShopHeader />
-
-//       <main className="flex-1">
-//         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-//           <h1 className="text-2xl font-semibold">
-//             {tieneDatos ? "¡Gracias por tu compra!" : "Compra registrada"}
-//           </h1>
-
-//           {tieneDatos ? (
-//             <section
-//               className="rounded-2xl border border-gray-200 dark:border-gray-800
-//                          bg-white/80 dark:bg-gray-950/80
-//                          backdrop-blur-sm p-4 sm:p-6 space-y-4 shadow-lg"
-//             >
-//               {/* Resumen pedido */}
-//               <div className="space-y-1 text-sm">
-//                 <p className="text-gray-700 dark:text-gray-300">
-//                   Número de pedido:{" "}
-//                   <span className="font-semibold">#{venta.id}</span>
-//                 </p>
-
-//                 <p className="text-xs text-gray-500 dark:text-gray-400">
-//                   Fecha:{" "}
-//                   {venta.fecha
-//                     ? new Date(venta.fecha).toLocaleString("es-AR")
-//                     : "-"}
-//                 </p>
-
-//                 <p className="text-xs text-gray-500 dark:text-gray-400">
-//                   Canal: {venta.canal || "web_shop"}
-//                 </p>
-//               </div>
-
-//               {/* Totales */}
-//               <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-3 text-sm">
-//                 <div className="flex justify-between">
-//                   <span>Subtotal</span>
-//                   <span>{formatPrice(total_bruto)}</span>
-//                 </div>
-
-//                 {Number(descuento) > 0 && (
-//                   <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-//                     <span>Descuento</span>
-//                     <span>-{formatPrice(descuento)}</span>
-//                   </div>
-//                 )}
-
-//                 <div className="flex justify-between font-semibold text-base">
-//                   <span>Total</span>
-//                   <span>{formatPrice(total_final)}</span>
-//                 </div>
-//               </div>
-
-//               {/* Detalle productos */}
-//               {Array.isArray(detalles) && detalles.length > 0 && (
-//                 <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
-//                   <h2 className="text-sm font-semibold mb-2">
-//                     Detalle de productos
-//                   </h2>
-
-//                   <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
-//                     {detalles.map((d) => (
-//                       <li key={d.id ?? `${d.producto_id}-${d.cantidad}`} className="flex justify-between gap-2">
-//                         <span className="truncate">
-//                           Producto #{d.producto_id}{" "}
-//                           <span className="text-gray-500 dark:text-gray-400">
-//                             x{d.cantidad}
-//                           </span>
-//                         </span>
-//                         <span>{formatPrice(d.subtotal)}</span>
-//                       </li>
-//                     ))}
-//                   </ul>
-//                 </div>
-//               )}
-
-//               <p className="text-xs text-gray-500 dark:text-gray-400 pt-2">
-//                 Nos vamos a comunicar con vos para coordinar el{" "}
-//                 <span className="font-semibold">método de pago y entrega</span>.
-//               </p>
-//             </section>
-//           ) : (
-//             <section
-//               className="rounded-2xl border border-gray-200 dark:border-gray-800
-//                          bg-white/80 dark:bg-gray-950/80
-//                          backdrop-blur-sm p-4 sm:p-6 text-sm text-gray-700 dark:text-gray-300"
-//             >
-//               <p>
-//                 Tu compra fue registrada, pero no encontramos el detalle completo en esta vista.
-//               </p>
-//               <p className="text-xs mt-2 text-gray-500 dark:text-gray-400">
-//                 Si recargaste la página, puede haberse perdido el estado temporal.
-//                 Igual podés volver a la tienda o consultar por WhatsApp.
-//               </p>
-//             </section>
-//           )}
-
-//           <div className="flex gap-3">
-//             <Link
-//               to="/"
-//               className="inline-flex items-center justify-center
-//                          rounded-full border border-gray-300 dark:border-gray-700
-//                          bg-white dark:bg-gray-900
-//                          px-4 py-2 text-sm font-medium
-//                          text-gray-800 dark:text-gray-100
-//                          hover:bg-gray-100 dark:hover:bg-gray-800
-//                          transition-colors"
-//             >
-//               ← Volver a la tienda
-//             </Link>
-//           </div>
-//         </div>
-//       </main>
-//     </div>
-//   );
-// };
-
-// export default ConfirmacionCompraPage;
-
-// src/pages/ConfirmacionCompraPage.jsx
 // src/pages/ConfirmacionCompraPage.jsx
 import { useEffect, useMemo } from "react";
 import { useLocation, Link } from "react-router-dom";
@@ -198,6 +5,7 @@ import { CheckCircle2, ReceiptText, Package, ArrowLeft } from "lucide-react";
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 
 const LS_LAST_ORDER = "jg_shop_last_order";
+const MAX_AGE_MS = 5 * 60 * 1000; // ✅ TTL: 5 minutos
 
 const toNumber = (v, fallback = 0) => {
   const n = Number(v);
@@ -230,17 +38,28 @@ const ConfirmacionCompraPage = () => {
       ? state.resp.data
       : null;
 
-  // ✅ backup desde localStorage si state viene vacío (ej: recarga)
+  // ✅ Backup desde localStorage SOLO si es reciente (evita mostrar pedidos viejos con descuento)
   const fromStorage = useMemo(() => {
     try {
       const raw = localStorage.getItem(LS_LAST_ORDER);
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+
+      // ✅ TTL: ignorar si no tiene saved_at o es viejo
+      const savedAt = Number(parsed?.saved_at ?? 0);
+      if (!savedAt || Date.now() - savedAt > MAX_AGE_MS) return null;
+
+      // ✅ sanity check: si no tiene venta, no sirve
+      if (!parsed?.venta?.id) return null;
+
+      return parsed;
     } catch {
       return null;
     }
   }, []);
 
-  // ✅ Payload final (fuente de verdad = lo que mandó backend)
+  // ✅ Payload final: state siempre gana, storage solo si está “fresco”
   const payload = fromState || fromStorage || {};
 
   // ✅ SOLO backend (nada de contexts acá)
@@ -250,35 +69,43 @@ const ConfirmacionCompraPage = () => {
   // Totales "backend first"
   const total_bruto = payload?.total_bruto ?? payload?.totalBruto ?? null;
   const descuento = payload?.descuento ?? 0;
+
   const total_final =
     payload?.total_final ??
     payload?.totalFinal ??
     venta?.total ??
     (toNumber(total_bruto, 0) - toNumber(descuento, 0));
 
-  const codigoCupon = payload?.codigo_cupon ?? null; // mostrar SOLO si descuento > 0
+  const codigoCupon = payload?.codigo_cupon ?? null;
+
   const tieneDatos = !!venta?.id;
 
-  // ✅ Guardamos la última compra para no perderla si recargan
+  // ✅ Guardamos la última compra SOLO si vino por state (flujo normal)
+  // Esto evita que una confirmación abierta “a mano” pise el último pedido real.
   useEffect(() => {
     if (!tieneDatos) return;
 
-    const save = {
-      venta,
-      detalles,
-      total_bruto,
-      descuento: toNumber(descuento, 0),
-      total_final: toNumber(total_final, 0),
-      codigo_cupon: codigoCupon ?? null,
-    };
+    // si llegó por state, lo persistimos “fresco”
+    if (fromState) {
+      const save = {
+        venta,
+        detalles,
+        total_bruto,
+        descuento: toNumber(descuento, 0),
+        total_final: toNumber(total_final, 0),
+        codigo_cupon: codigoCupon ?? null,
+        saved_at: Date.now(),
+      };
 
-    try {
-      localStorage.setItem(LS_LAST_ORDER, JSON.stringify(save));
-    } catch {
-      // ignore
+      try {
+        localStorage.setItem(LS_LAST_ORDER, JSON.stringify(save));
+      } catch {
+        // ignore
+      }
     }
-  }, [tieneDatos, venta, detalles, total_bruto, descuento, total_final, codigoCupon]);
+  }, [tieneDatos, fromState, venta, detalles, total_bruto, descuento, total_final, codigoCupon]);
 
+  // ✅ mostrar descuento SOLO si backend lo aplicó
   const showDiscount = toNumber(descuento, 0) > 0;
 
   return (
@@ -287,7 +114,7 @@ const ConfirmacionCompraPage = () => {
 
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-4 py-10">
-          {/* HERO / HEADLINE */}
+          {/* HERO */}
           <div className="flex flex-col gap-2">
             <div className="inline-flex items-center gap-2 text-emerald-400">
               <CheckCircle2 className="h-5 w-5" />
@@ -297,19 +124,26 @@ const ConfirmacionCompraPage = () => {
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-              {tieneDatos ? "¡Gracias por tu compra!" : "Listo, registramos tu compra"}
+              {tieneDatos ? "¡Gracias por tu compra!" : "No encontramos el pedido"}
             </h1>
 
             <p className="text-sm text-slate-300 max-w-2xl">
               {tieneDatos
                 ? "Te vamos a contactar para coordinar el método de pago y la entrega. Guardá el número de pedido por cualquier consulta."
-                : "No encontramos el detalle completo en esta vista. Podés volver a la tienda o consultarnos por WhatsApp."}
+                : "Si recargaste la página o pasó mucho tiempo, es posible que se haya perdido el detalle. Volvé a la tienda."}
             </p>
+
+            {/* Badge sutil si vino del storage */}
+            {tieneDatos && !fromState && fromStorage && (
+              <div className="mt-2 inline-flex w-fit items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-300">
+                Mostrando el último pedido guardado (por recarga)
+              </div>
+            )}
           </div>
 
-          {/* CONTENT GRID */}
+          {/* CONTENIDO */}
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* LEFT: Detalle + Totales */}
+            {/* LEFT */}
             <section className="lg:col-span-2 space-y-6">
               {/* Card: Pedido */}
               <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 sm:p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
@@ -328,7 +162,6 @@ const ConfirmacionCompraPage = () => {
                     </div>
                   </div>
 
-                  {/* Chip */}
                   {tieneDatos && (
                     <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
                       Pedido <span className="font-semibold">#{venta.id}</span>
@@ -410,7 +243,7 @@ const ConfirmacionCompraPage = () => {
                       {detalles.map((d, idx) => {
                         const key = d?.id ?? `${d?.producto_id ?? "p"}-${idx}`;
                         const qty = toNumber(d?.cantidad, 1);
-                        const lineTotal = d?.subtotal ?? null;
+                        const lineTotal = d?.subtotal ?? 0;
 
                         return (
                           <li key={key} className="py-3 flex items-start justify-between gap-3">
@@ -419,7 +252,8 @@ const ConfirmacionCompraPage = () => {
                                 {d?.producto_nombre ?? `Producto #${d?.producto_id ?? "?"}`}
                               </p>
                               <p className="text-xs text-slate-400">
-                                Cantidad: <span className="font-medium text-slate-200">x{qty}</span>
+                                Cantidad:{" "}
+                                <span className="font-medium text-slate-200">x{qty}</span>
                               </p>
                             </div>
 
@@ -449,7 +283,7 @@ const ConfirmacionCompraPage = () => {
               </div>
             </section>
 
-            {/* RIGHT: Acciones / next steps */}
+            {/* RIGHT */}
             <aside className="space-y-4">
               <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5">
                 <h3 className="text-sm font-semibold text-slate-100">
@@ -484,7 +318,6 @@ const ConfirmacionCompraPage = () => {
                 </div>
               </div>
 
-              {/* Tip extra / confianza */}
               <div className="rounded-2xl border border-white/10 bg-black/20 p-5 text-sm text-slate-300">
                 <p className="font-semibold text-slate-100">Tip</p>
                 <p className="mt-1 text-sm text-slate-300">
@@ -501,5 +334,3 @@ const ConfirmacionCompraPage = () => {
 };
 
 export default ConfirmacionCompraPage;
-
-

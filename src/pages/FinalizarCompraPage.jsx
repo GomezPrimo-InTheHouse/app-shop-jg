@@ -24,7 +24,7 @@ const FinalizarCompraPage = () => {
   const [montoAbonado] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const LS_LAST_ORDER = "jg_shop_last_order"; // ✅ arriba del componente / archivo
+ const LS_LAST_ORDER = "jg_shop_last_order";
 
 const handleConfirmarCompra = async () => {
   if (!cliente?.id) {
@@ -52,29 +52,33 @@ const handleConfirmarCompra = async () => {
     const resp = await crearVentaApi(payload);
     const data = resp?.data ?? resp;
 
-    // ✅ Guardar SIEMPRE el último pedido con timestamp (evita mostrar uno viejo)
+    // ✅ Guardar SIEMPRE el último pedido (pisar cualquier pedido viejo)
     const saved = { ...data, saved_at: Date.now() };
     try {
       localStorage.setItem(LS_LAST_ORDER, JSON.stringify(saved));
     } catch {}
 
-    // ✅ Si se intentó usar cupón, invalidamos la sugerencia del Auth
+    // ✅ Si se intentó usar cupón, invalidar sugerencia del Auth
     if (payload.codigo_cupon) {
-      const backendAplicoDescuento = Number(data?.descuento ?? 0) > 0;
-
       invalidateCuponActivo?.({
-        markBlocked: backendAplicoDescuento,
-        reason: backendAplicoDescuento
+        markBlocked: Number(data?.descuento ?? 0) > 0,
+        reason: Number(data?.descuento ?? 0) > 0
           ? "Cupón utilizado."
           : "Cupón no aplicable / ya usado.",
       });
     }
 
+    // ✅ limpiar carrito y cupón (orden correcto)
     clearCart();
+    limpiarCupon?.();
+
     showNotification("success", "Compra registrada correctamente.");
 
-    // ✅ Pasamos saved (incluye saved_at) en el state
-    navigate("/shop/confirmacion", { state: saved });
+    // ✅ CLAVE: pasar venta_id en la URL (esto salva mobile)
+    const ventaId = data?.venta?.id ?? data?.venta_id ?? null;
+    const qs = ventaId ? `?venta_id=${ventaId}` : "";
+
+    navigate(`/shop/confirmacion${qs}`, { state: saved });
   } catch (error) {
     console.error("Error creando venta", error);
 
@@ -85,10 +89,10 @@ const handleConfirmarCompra = async () => {
 
     showNotification("error", backendMsg);
   } finally {
-    limpiarCupon?.();
     setLoading(false);
   }
 };
+
 
   const totalMostrado = totalConDescuento ?? totalAmount ?? 0;
 

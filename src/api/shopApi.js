@@ -167,3 +167,9 @@ export const crearVentaApi = ({
 
 export const crearVentaData = async (payload) =>
   (await crearVentaApi(payload)).data;
+
+
+export const getVentaByIdApi = async (ventaId) => {
+  const resp = await axios.get(`${API}/shop/ventas/${ventaId}`);
+  return resp?.data ?? resp;
+};

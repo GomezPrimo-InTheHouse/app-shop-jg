@@ -189,7 +189,7 @@ const ShopHome = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
 
   // NOTA: Reemplaza este SRC por el que te da Google Maps en "Compartir -> Insertar mapa"
-  const googleMapsSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3393.737144983944!2d-63.2452044!3d-32.41328!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzLCsDI0JzQ3LjgiUyA2M8KwMTQnNDIuNyJX!5e0!3m2!1ses-419!2sar!4v1700000000000";
+  const googleMapsSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3368.012063720076!2d-63.2356383239807!3d-32.418834945426866!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95cc43da9e9efa5d%3A0xb7299c488061375c!2sJulian%20Gomez%20Inform%C3%A1tica!5e0!3m2!1ses!2sar!4v1765998900707!5m2!1ses!2sar";
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f1a] text-slate-900 dark:text-slate-100 transition-colors duration-500 flex flex-col">
@@ -267,14 +267,7 @@ const ShopHome = () => {
               <ShoppingBag className="text-indigo-500" />
               Nuestros Productos
             </h2>
-            <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input 
-                type="text" 
-                placeholder="¿Qué estás buscando hoy?" 
-                className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all"
-              />
-            </div>
+            
           </div>
           <ProductGrid />
         </div>

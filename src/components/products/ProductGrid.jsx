@@ -404,36 +404,28 @@ const ProductGrid = () => {
     loadProductos();
   }, []);
 
-  // ✅ Inicializa/ajusta inputs cuando cambian los bounds (por carga o por nuevos productos)
   useEffect(() => {
-    // si no hay productos, limpiamos
+    // Si no hay productos: limpiar y listo
     if (!productos.length) {
       setMinPriceInput("");
       setMaxPriceInput("");
       return;
     }
 
-    // Si están vacíos, inicializamos al rango disponible
-    // Si tienen valores, los clampamos al rango nuevo
+    // Si el usuario ya escribió algo, lo clampamos al nuevo rango cuando cambie el catálogo
     const currentMin = minPriceInput === "" ? null : Number(minPriceInput);
     const currentMax = maxPriceInput === "" ? null : Number(maxPriceInput);
 
-    const nextMin = Number.isFinite(currentMin)
-      ? clamp(currentMin, minAvailablePrice, maxAvailablePrice)
-      : minAvailablePrice;
+    if (Number.isFinite(currentMin)) {
+      setMinPriceInput(String(Math.round(clamp(currentMin, minAvailablePrice, maxAvailablePrice))));
+    }
 
-    const nextMax = Number.isFinite(currentMax)
-      ? clamp(currentMax, minAvailablePrice, maxAvailablePrice)
-      : maxAvailablePrice;
-
-    // Asegurar min <= max
-    const fixedMin = Math.min(nextMin, nextMax);
-    const fixedMax = Math.max(nextMin, nextMax);
-
-    setMinPriceInput(String(Math.round(fixedMin)));
-    setMaxPriceInput(String(Math.round(fixedMax)));
+    if (Number.isFinite(currentMax)) {
+      setMaxPriceInput(String(Math.round(clamp(currentMax, minAvailablePrice, maxAvailablePrice))));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minAvailablePrice, maxAvailablePrice, productos.length]);
+
 
   // ✅ Parse final (null si vacío)
   const minPriceFilter = minPriceInput === "" ? null : Number(minPriceInput);
@@ -488,7 +480,7 @@ const ProductGrid = () => {
   };
 
   const handleMinBlur = () => {
-    if (minPriceInput === "") return;
+    if (minPriceInput === "") return; // vacío => sin filtro
 
     const raw = Number(minPriceInput);
     if (!Number.isFinite(raw)) {
@@ -496,17 +488,18 @@ const ProductGrid = () => {
       return;
     }
 
-    const clamped = clamp(raw, minAvailablePrice, maxAvailablePrice);
+    // ✅ clamp al rango real
+    let fixed = clamp(raw, minAvailablePrice, maxAvailablePrice);
 
-    // si existe max, asegurar min <= max
+    // ✅ si existe max, asegurar min <= max
     const maxRaw = maxPriceInput === "" ? null : Number(maxPriceInput);
-    const fixed = Number.isFinite(maxRaw) ? Math.min(clamped, maxRaw) : clamped;
+    if (Number.isFinite(maxRaw)) fixed = Math.min(fixed, clamp(maxRaw, minAvailablePrice, maxAvailablePrice));
 
     setMinPriceInput(String(Math.round(fixed)));
   };
 
   const handleMaxBlur = () => {
-    if (maxPriceInput === "") return;
+    if (maxPriceInput === "") return; // vacío => sin filtro
 
     const raw = Number(maxPriceInput);
     if (!Number.isFinite(raw)) {
@@ -514,14 +507,16 @@ const ProductGrid = () => {
       return;
     }
 
-    const clamped = clamp(raw, minAvailablePrice, maxAvailablePrice);
+    // ✅ clamp al rango real
+    let fixed = clamp(raw, minAvailablePrice, maxAvailablePrice);
 
-    // si existe min, asegurar max >= min
+    // ✅ si existe min, asegurar max >= min
     const minRaw = minPriceInput === "" ? null : Number(minPriceInput);
-    const fixed = Number.isFinite(minRaw) ? Math.max(clamped, minRaw) : clamped;
+    if (Number.isFinite(minRaw)) fixed = Math.max(fixed, clamp(minRaw, minAvailablePrice, maxAvailablePrice));
 
     setMaxPriceInput(String(Math.round(fixed)));
   };
+
 
   return (
     <div className="pt-2">
@@ -538,9 +533,8 @@ const ProductGrid = () => {
           <SlidersHorizontal className="w-4 h-4" />
           <span className="font-medium">Filtros</span>
           <ChevronDown
-            className={`w-4 h-4 transition-transform ${
-              showFilters ? "rotate-180" : "rotate-0"
-            }`}
+            className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : "rotate-0"
+              }`}
           />
         </button>
       </div>
@@ -564,13 +558,14 @@ const ProductGrid = () => {
             <button
               type="button"
               onClick={() => {
-                setMinPriceInput(String(Math.round(minAvailablePrice)));
-                setMaxPriceInput(String(Math.round(maxAvailablePrice)));
+                setMinPriceInput("");
+                setMaxPriceInput("");
               }}
               className="text-xs font-semibold text-gray-600 dark:text-gray-300 hover:underline"
             >
               Reset
             </button>
+
           </div>
 
           <div className="flex items-center gap-2 text-sm">
@@ -635,10 +630,9 @@ const ProductGrid = () => {
                 role="tab"
                 aria-selected={selectedCategory === cat}
                 className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap 
-                  ${
-                    selectedCategory === cat
-                      ? "bg-indigo-600 text-white dark:bg-indigo-500 dark:text-gray-900 shadow-md"
-                      : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  ${selectedCategory === cat
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500 dark:text-gray-900 shadow-md"
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }
                 `}
               >

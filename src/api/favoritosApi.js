@@ -36,7 +36,7 @@ export const removeFavorito = (clienteId, productoId) =>
   });
 
 export const toggleFavorito = (clienteId, productoId) =>
-  requestJSON(`${API}/shop/clientes/${clienteId}/favoritos/toggle`, {
+  requestJSON(`${API}/favoritos/clientes/${clienteId}/favoritos/toggle`, {
     method: "POST",
     body: JSON.stringify({ producto_id: productoId }),
   });

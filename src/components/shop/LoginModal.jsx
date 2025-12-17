@@ -208,6 +208,7 @@ const LoginModal = ({ isOpen, onClose }) => {
     apellido: "",
     dni: "",
     email: "",
+    celular: "",
   });
 
   // ✅ UX: al abrir, foco en el primer input
@@ -220,7 +221,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   // ✅ UX: al cerrar, resetea form (opcional)
   useEffect(() => {
     if (!isOpen) {
-      setForm({ nombre: "", apellido: "", dni: "", email: "" });
+      setForm({ nombre: "", apellido: "", dni: "", celular: "", email: "" });
     }
   }, [isOpen]);
 
@@ -342,6 +343,23 @@ const LoginModal = ({ isOpen, onClose }) => {
                 type="text"
                 name="dni"
                 value={form.dni}
+                onChange={handleChange}
+                required
+                className="w-full rounded-lg bg-gray-50 dark:bg-gray-800
+                           border border-gray-300 dark:border-gray-700
+                           px-3 py-2 text-xs sm:text-sm
+                           text-gray-900 dark:text-gray-100
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-gray-600 dark:text-gray-400 mb-1">
+                Celular / WhatsApp
+              </label>
+              <input
+                type="text"
+                name="celular"
+                value={form.celular}
                 onChange={handleChange}
                 required
                 className="w-full rounded-lg bg-gray-50 dark:bg-gray-800

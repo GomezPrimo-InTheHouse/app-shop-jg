@@ -1,10 +1,11 @@
+
 // import React from "react";
 // import { Link } from "react-router-dom";
 // import { ShoppingBag } from "lucide-react";
 
 // const ProductCard = ({ product }) => {
 //   const formatPrice = (value) =>
-//     value.toLocaleString("es-AR", {
+//     Number(value || 0).toLocaleString("es-AR", {
 //       style: "currency",
 //       currency: "ARS",
 //       maximumFractionDigits: 0,
@@ -16,6 +17,7 @@
 
 //   let formattedOldPrice = null;
 //   if (hasOffer) {
+//     // product.oferta es porcentaje (ej 10 => 10%)
 //     const originalPrice = product.precio / (1 - product.oferta / 100);
 //     formattedOldPrice = formatPrice(originalPrice);
 //   }
@@ -51,7 +53,6 @@
 //                        bg-indigo-700/95 px-3 py-1 shadow-lg
 //                        border border-indigo-400/60"
 //           >
-//             {/* Número de oferta en amarillo */}
 //             <span className="text-xs font-extrabold text-yellow-300">
 //               -{product.oferta}%
 //             </span>
@@ -96,20 +97,32 @@
 
 //       {/* Precio + CTA */}
 //       <div className="mt-3 flex flex-col gap-1 border-t border-gray-100 pt-3 dark:border-gray-700">
-//         {/* Precios */}
-//         <div className="flex items-end gap-2">
-//           <span
-//             className="whitespace-nowrap text-xl sm:text-2xl font-extrabold 
-//                        text-indigo-600 dark:text-indigo-400"
-//           >
-//             {formattedPrice}
-//           </span>
-
-//           {hasOffer && formattedOldPrice && (
-//             <span className="whitespace-nowrap text-xs sm:text-sm font-medium line-through text-gray-400 dark:text-gray-500">
-//               {formattedOldPrice}
+//         {/* ✅ Precios (FIX mobile: no se desfasa ni se sale de la card) */}
+//         <div className="min-w-0">
+//           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+//             <span
+//               className="whitespace-nowrap text-xl sm:text-2xl font-extrabold 
+//                          text-indigo-600 dark:text-indigo-400 leading-none tabular-nums"
+//             >
+//               {formattedPrice}
 //             </span>
-//           )}
+
+//             {hasOffer && formattedOldPrice && (
+//               <span className="whitespace-nowrap text-xs sm:text-sm font-medium line-through text-gray-400 dark:text-gray-500 leading-none tabular-nums">
+//                 {formattedOldPrice}
+//               </span>
+//             )}
+
+//             {/* Badge extra opcional (queda prolijo en mobile). Si no lo querés, lo borrás. */}
+//             {hasOffer && (
+//               <span
+//                 className="whitespace-nowrap text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full
+//                            bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
+//               >
+//                 Ahorrás {product.oferta}%
+//               </span>
+//             )}
+//           </div>
 //         </div>
 
 //         {/* Botón CTA */}
@@ -135,12 +148,14 @@
 
 // export default ProductCard;
 
-
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Heart, Loader2 } from "lucide-react";
+import { useFavorites } from "../../context/FavoriteContext.jsx"; // ✅ ajustá si tu estructura es distinta
 
 const ProductCard = ({ product }) => {
+  const { isFavorite, toggleFavorite, pendingById } = useFavorites();
+
   const formatPrice = (value) =>
     Number(value || 0).toLocaleString("es-AR", {
       style: "currency",
@@ -148,16 +163,24 @@ const ProductCard = ({ product }) => {
       maximumFractionDigits: 0,
     });
 
-  const formattedPrice = formatPrice(product.precio);
+  // ✅ precio_final ?? precio
+  const displayPrice =
+    Number(product?.precio_final) > 0 ? product.precio_final : product.precio;
 
-  const hasOffer = product.oferta && product.oferta > 0;
+  const formattedPrice = formatPrice(displayPrice);
+
+  const offerPct = Number(product?.oferta);
+  const hasOffer = Number.isFinite(offerPct) && offerPct > 0;
 
   let formattedOldPrice = null;
-  if (hasOffer) {
-    // product.oferta es porcentaje (ej 10 => 10%)
-    const originalPrice = product.precio / (1 - product.oferta / 100);
+  if (hasOffer && offerPct < 100 && Number(displayPrice) > 0) {
+    // Si displayPrice es el precio final (con descuento), calculamos el "precio original"
+    const originalPrice = Number(displayPrice) / (1 - offerPct / 100);
     formattedOldPrice = formatPrice(originalPrice);
   }
+
+  const fav = isFavorite?.(product?.id);
+  const pending = !!pendingById?.[product?.id];
 
   const handleImageError = (e) => {
     e.target.src =
@@ -184,6 +207,34 @@ const ProductCard = ({ product }) => {
           loading="lazy"
         />
 
+        {/* ❤️ Favorito (overlay top-right) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            // evita que el click se convierta en navegación/acciones del contenedor
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite(product); // pasamos el producto para que Mis Favoritos se actualice sin refetch
+          }}
+          aria-label={fav ? "Quitar de favoritos" : "Agregar a favoritos"}
+          className="absolute top-2 right-2 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full
+                     bg-white/90 backdrop-blur border border-gray-200 shadow
+                     hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500
+                     dark:bg-gray-900/70 dark:border-gray-700"
+        >
+          {pending ? (
+            <Loader2 className="h-4 w-4 animate-spin text-indigo-600 dark:text-indigo-300" />
+          ) : (
+            <Heart
+              className={`h-4 w-4 transition ${
+                fav
+                  ? "text-rose-600 fill-rose-600"
+                  : "text-gray-600 dark:text-gray-300"
+              }`}
+            />
+          )}
+        </button>
+
         {hasOffer && (
           <span
             className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full 
@@ -191,7 +242,7 @@ const ProductCard = ({ product }) => {
                        border border-indigo-400/60"
           >
             <span className="text-xs font-extrabold text-yellow-300">
-              -{product.oferta}%
+              -{offerPct}%
             </span>
             <span className="text-[10px] font-semibold tracking-wide text-white uppercase">
               OFF
@@ -234,7 +285,7 @@ const ProductCard = ({ product }) => {
 
       {/* Precio + CTA */}
       <div className="mt-3 flex flex-col gap-1 border-t border-gray-100 pt-3 dark:border-gray-700">
-        {/* ✅ Precios (FIX mobile: no se desfasa ni se sale de la card) */}
+        {/* ✅ Precios (mobile ok) */}
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
             <span
@@ -250,13 +301,12 @@ const ProductCard = ({ product }) => {
               </span>
             )}
 
-            {/* Badge extra opcional (queda prolijo en mobile). Si no lo querés, lo borrás. */}
             {hasOffer && (
               <span
                 className="whitespace-nowrap text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full
                            bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
               >
-                Ahorrás {product.oferta}%
+                Ahorrás {offerPct}%
               </span>
             )}
           </div>

@@ -13,7 +13,8 @@ import { CouponProvider } from "./context/CouponContext.jsx";
 import { NotificationProvider } from "./context/NotificationContext.jsx";
 import ConfirmacionCompraPage from "./pages/ConfirmacionCompraPage.jsx"; // 👈 NUEVO
 import { UIProvider } from "./context/UIContext.jsx";
-
+import { FavoriteProvider } from "./context/FavoriteContext";
+import MisFavoritosPage from "./pages/MisFavoritosPage.jsx";
 import CartDrawer from "./components/cart/CartDrawer.jsx";
 
 const App = () => {
@@ -22,8 +23,10 @@ const App = () => {
       <NotificationProvider>
         <AuthProvider>
           <CouponProvider>
+            <FavoriteProvider>
             <CartProvider>
               {/* Drawer del carrito siempre montado, con acceso a los contexts */}
+              
               <CartDrawer />
 
               <Routes>
@@ -31,6 +34,7 @@ const App = () => {
                 <Route path="/login" element={<LoginClientePage />} />
                 <Route path="/producto/:id" element={<ProductDetail />} />
                 <Route path="/checkout" element={<FinalizarCompraPage />} />
+                <Route path="/mis-favoritos" element={<MisFavoritosPage />} />
                 <Route path="/mis-cupones" element={<MisCuponesPage />} />
                 <Route
                   path="/shop/confirmacion"
@@ -38,6 +42,7 @@ const App = () => {
                 />
               </Routes>
             </CartProvider>
+            </FavoriteProvider>
           </CouponProvider>
         </AuthProvider>
       </NotificationProvider>

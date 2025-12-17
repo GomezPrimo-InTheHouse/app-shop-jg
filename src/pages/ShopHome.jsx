@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { ShoppingBag, ShieldCheck, MapPin, Search, X, MessageCircle, ExternalLink } from 'lucide-react';
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 import ProductGrid from "../components/products/ProductGrid.jsx";
-t
 const ShopHome = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
 

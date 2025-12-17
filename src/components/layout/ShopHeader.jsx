@@ -211,7 +211,7 @@ const ShopHeader = () => {
           </Link>
 
           {/* Método de entrega (solo desktop/tablet) */}
-          <button
+          {/* <button
             type="button"
             className="hidden sm:inline-flex items-center gap-2 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors"
           >
@@ -219,7 +219,7 @@ const ShopHeader = () => {
             <span>
               Elegí el <span className="font-semibold">método de entrega</span>
             </span>
-          </button>
+          </button> */}
 
           {/* Acciones derecha */}
           <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">

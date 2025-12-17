@@ -326,13 +326,13 @@ const SKELETON_COUNT = 8;
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
 // precio efectivo: si oferta es número, se usa oferta; si no, precio
+// ✅ precio efectivo para filtrar (precio final mostrado)
+// oferta es % (no es precio), así que NO se usa acá
 const getEffectivePrice = (p) => {
-  const oferta = Number(p?.oferta);
   const precio = Number(p?.precio);
-  if (Number.isFinite(oferta)) return oferta;
-  if (Number.isFinite(precio)) return precio;
-  return 0;
+  return Number.isFinite(precio) ? precio : 0;
 };
+
 
 const normalizeCategory = (cat) => {
   if (!cat || typeof cat !== "string") return "";

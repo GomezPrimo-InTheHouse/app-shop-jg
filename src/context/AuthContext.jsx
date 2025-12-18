@@ -396,10 +396,18 @@ export const AuthProvider = ({ children }) => {
   }, [cliente, canalCliente, cuponActivo, cuponFlags]);
 
   // ✅ LOGIN comprador
-  const login = async ({ nombre, apellido, dni, email }) => {
+  const login = async ({ nombre, apellido, dni, celular, email }) => {
     setLoading(true);
     try {
-      const resp = await loginShopApi({ nombre, apellido, dni, email });
+      const payload = {
+      nombre: String(nombre ?? "").trim(),
+      apellido: String(apellido ?? "").trim(),
+      dni: String(dni ?? "").trim(),
+      celular: String(celular ?? "").trim(),     // ✅ incluir
+      email: (email ? String(email).trim() : null), // ✅ opcional
+    };
+
+    const resp = await loginShopApi(payload);
       const data = resp?.data ?? resp;
 
       const clienteResp = data?.cliente ?? null;

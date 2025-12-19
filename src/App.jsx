@@ -34,7 +34,7 @@ const App = () => {
                 <Route path="/login" element={<LoginClientePage />} />
                 <Route path="/producto/:id" element={<ProductDetail />} />
                 <Route path="/checkout" element={<FinalizarCompraPage />} />
-                <Route path="/mis-favoritos" element={<MisFavoritosPage />} />
+                <Route path="/favoritos" element={<MisFavoritosPage />} />
                 <Route path="/mis-cupones" element={<MisCuponesPage />} />
                 <Route
                   path="/shop/confirmacion"

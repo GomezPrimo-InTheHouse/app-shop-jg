@@ -22,16 +22,16 @@ async function requestJSON(url, options = {}) {
 }
 
 export const getFavoritos = (clienteId) =>
-  requestJSON(`${API}/shop/clientes/${clienteId}/favoritos`, { method: "GET" });
+  requestJSON(`${API}/favorito/clientes/${clienteId}/favoritos`, { method: "GET" });
 
 export const addFavorito = (clienteId, productoId) =>
-  requestJSON(`${API}/shop/clientes/${clienteId}/favoritos`, {
+  requestJSON(`${API}/favorito/clientes/${clienteId}/favoritos`, {
     method: "POST",
     body: JSON.stringify({ producto_id: productoId }),
   });
 
 export const removeFavorito = (clienteId, productoId) =>
-  requestJSON(`${API}/shop/clientes/${clienteId}/favoritos/${productoId}`, {
+  requestJSON(`${API}/favorito/clientes/${clienteId}/favoritos/${productoId}`, {
     method: "DELETE",
   });
 

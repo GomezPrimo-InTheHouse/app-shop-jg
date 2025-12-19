@@ -9,8 +9,8 @@ import React, {
 } from "react";
 import { getFavoritos, toggleFavorito } from "../api/favoritosApi";
 import { useNotification } from "./NotificationContext";
+import { useAuth } from "./AuthContext";
 
-const FavoriteContext = createContext(null);
 
 const getBuyerFromStorage = () => {
   try {
@@ -37,12 +37,27 @@ const getDisplayPrice = (p) => {
 export const FavoriteProvider = ({ children }) => {
   const { showNotification } = useNotification();
 
-  const [clienteId, setClienteId] = useState(() => getClienteId());
+  const { cliente } = useAuth();
+  const clienteId = cliente?.id ?? null;
+
+  // const [clienteId, setClienteId] = useState(() => getClienteId());
 
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
   const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [pendingById, setPendingById] = useState({});
+
+  useEffect(() => {
+    if (Number.isFinite(clienteId)) {
+      // LOGIN → cargar favoritos
+      loadFavorites(clienteId);
+    } else {
+      // LOGOUT → limpiar estado local
+      setFavoriteIds(new Set());
+      setFavoriteProducts([]);
+    }
+  }, [clienteId, loadFavorites]);
+
 
   // ✅ se actualiza cuando cambia el storage
   useEffect(() => {
@@ -114,10 +129,11 @@ export const FavoriteProvider = ({ children }) => {
   const toggleFavorite = useCallback(
     async (productOrId) => {
       const cid = getClienteId();
-      if (!Number.isFinite(cid)) {
-        showNotification("info", "Para agregar favoritos debes iniciar sesion");
+      if (!Number.isFinite(clienteId)) {
+        showNotification("info", "Para agregar favoritos debes iniciar sesión");
         return;
       }
+
 
       const product =
         typeof productOrId === "object" && productOrId !== null ? productOrId : null;

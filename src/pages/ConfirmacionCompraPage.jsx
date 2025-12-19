@@ -66,7 +66,7 @@ const ConfirmacionCompraPage = () => {
       `Adjunto el comprobante de transferencia abajo:`;
       
     // Usamos wa.link/qeelcn pero le inyectamos el texto dinámico
-    const baseLink = "https://wa.me/5493534293881"; // Reemplaza con el número asociado a tu wa.link
+    const baseLink = "https://wa.me/5493534275476"; // Reemplaza con el número asociado a tu wa.link
     window.open(`${baseLink}?text=${mensaje}`, "_blank");
   };
 
@@ -163,6 +163,7 @@ const ConfirmacionCompraPage = () => {
                   <h4 className="text-2xl font-black italic uppercase mb-4 leading-tight">Acción Rápida</h4>
                   <p className="text-indigo-100 text-sm font-medium leading-relaxed mb-6">
                     Al presionar este botón se generará un mensaje automático con el detalle de tu pedido listo para enviar.
+                    Si ya realizaste la transferencia, adjuntá el comprobante en el chat de WhatsApp para agilizar el proceso.
                   </p>
                 </div>
 

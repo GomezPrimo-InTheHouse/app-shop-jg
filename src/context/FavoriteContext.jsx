@@ -1,5 +1,12 @@
 // src/context/FavoriteContext.jsx
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { getFavoritos, toggleFavorito } from "../api/favoritosApi";
 import { useNotification } from "./NotificationContext";
 
@@ -30,14 +37,25 @@ const getDisplayPrice = (p) => {
 export const FavoriteProvider = ({ children }) => {
   const { showNotification } = useNotification();
 
+  const [clienteId, setClienteId] = useState(() => getClienteId());
+
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
-  const [favoriteProducts, setFavoriteProducts] = useState([]); // productos completos (para Mis Favoritos)
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
-  const [pendingById, setPendingById] = useState({}); // { [productId]: true }
+  const [pendingById, setPendingById] = useState({});
 
-  const clienteId = useMemo(() => getClienteId(), []);
+  // ✅ se actualiza cuando cambia el storage
+  useEffect(() => {
+    const sync = () => setClienteId(getClienteId());
 
-  const isLoggedIn = useMemo(() => Number.isFinite(clienteId) && clienteId !== null, [clienteId]);
+    window.addEventListener("storage", sync);
+    window.addEventListener("jg_shop_buyer_changed", sync);
+
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("jg_shop_buyer_changed", sync);
+    };
+  }, []);
 
   const isFavorite = useCallback(
     (productId) => {
@@ -58,18 +76,19 @@ export const FavoriteProvider = ({ children }) => {
         const data = await getFavoritos(cid);
         const items = Array.isArray(data?.items) ? data.items : [];
 
-        const ids = new Set(items.map((it) => Number(it?.producto?.id)).filter(Number.isFinite));
+        const ids = new Set(
+          items.map((it) => Number(it?.producto?.id)).filter(Number.isFinite)
+        );
         setFavoriteIds(ids);
 
-        // guardamos productos completos (solo lo que viene)
         const prods = items
           .map((it) => it?.producto)
           .filter(Boolean)
           .map((p) => ({
             ...p,
-            // normalizamos para UI
             precio: getDisplayPrice(p),
           }));
+
         setFavoriteProducts(prods);
       } catch (e) {
         showNotification("error", `No se pudieron cargar favoritos: ${e.message}`);
@@ -80,11 +99,17 @@ export const FavoriteProvider = ({ children }) => {
     [showNotification]
   );
 
-  // Cargar al montar si hay sesión
+  // ✅ clave: reacciona al login/logout
   useEffect(() => {
-    const cid = getClienteId();
-    if (Number.isFinite(cid)) loadFavorites(cid);
-  }, [loadFavorites]);
+    if (!Number.isFinite(clienteId)) {
+      setFavoriteIds(new Set());
+      setFavoriteProducts([]);
+      setPendingById({});
+      setLoadingFavorites(false);
+      return;
+    }
+    loadFavorites(clienteId);
+  }, [clienteId, loadFavorites]);
 
   const toggleFavorite = useCallback(
     async (productOrId) => {
@@ -102,7 +127,7 @@ export const FavoriteProvider = ({ children }) => {
 
       const wasFav = favoriteIds.has(productId);
 
-      // Optimistic: flip inmediato
+      // optimistic ids
       setFavoriteIds((prev) => {
         const next = new Set(prev);
         if (wasFav) next.delete(productId);
@@ -110,13 +135,12 @@ export const FavoriteProvider = ({ children }) => {
         return next;
       });
 
-      // Optimistic: lista Mis Favoritos (si tenemos el producto a mano)
+      // optimistic list
       if (!wasFav && product) {
         setFavoriteProducts((prev) => {
           const exists = prev.some((p) => Number(p?.id) === productId);
           if (exists) return prev;
-          const normalized = { ...product, precio: getDisplayPrice(product) };
-          return [normalized, ...prev];
+          return [{ ...product, precio: getDisplayPrice(product) }, ...prev];
         });
       }
       if (wasFav) {
@@ -129,7 +153,6 @@ export const FavoriteProvider = ({ children }) => {
         const resp = await toggleFavorito(cid, productId);
         const serverFav = !!resp?.favorited;
 
-        // Si el server difiere, lo alineamos
         setFavoriteIds((prev) => {
           const next = new Set(prev);
           if (serverFav) next.add(productId);
@@ -137,19 +160,13 @@ export const FavoriteProvider = ({ children }) => {
           return next;
         });
 
-        if (serverFav) {
-          showNotification("success", "Agregado a favoritos");
-        } else {
-          showNotification("success", "Eliminado de favoritos");
-        }
+        if (serverFav) showNotification("success", "Agregado a favoritos");
+        else showNotification("success", "Eliminado de favoritos");
 
-        // Si el server dice que quedó favorito pero no teníamos producto en la lista,
-        // recargamos favoritos para completar la data.
-        if (serverFav && !product) {
-          loadFavorites(cid);
-        }
+        // si quedó favorito y no teníamos producto, recargar
+        if (serverFav && !product) loadFavorites(cid);
       } catch (e) {
-        // Revertir
+        // revert ids
         setFavoriteIds((prev) => {
           const next = new Set(prev);
           if (wasFav) next.add(productId);
@@ -157,7 +174,7 @@ export const FavoriteProvider = ({ children }) => {
           return next;
         });
 
-        // Revert lista
+        // revert list
         if (!wasFav && product) {
           setFavoriteProducts((prev) => prev.filter((p) => Number(p?.id) !== productId));
         }
@@ -165,8 +182,7 @@ export const FavoriteProvider = ({ children }) => {
           setFavoriteProducts((prev) => {
             const exists = prev.some((p) => Number(p?.id) === productId);
             if (exists) return prev;
-            const normalized = { ...product, precio: getDisplayPrice(product) };
-            return [normalized, ...prev];
+            return [{ ...product, precio: getDisplayPrice(product) }, ...prev];
           });
         }
 
@@ -184,6 +200,7 @@ export const FavoriteProvider = ({ children }) => {
 
   const value = useMemo(
     () => ({
+      clienteId,
       favoriteIds,
       favoriteProducts,
       loadingFavorites,
@@ -192,7 +209,16 @@ export const FavoriteProvider = ({ children }) => {
       loadFavorites,
       toggleFavorite,
     }),
-    [favoriteIds, favoriteProducts, loadingFavorites, pendingById, isFavorite, loadFavorites, toggleFavorite]
+    [
+      clienteId,
+      favoriteIds,
+      favoriteProducts,
+      loadingFavorites,
+      pendingById,
+      isFavorite,
+      loadFavorites,
+      toggleFavorite,
+    ]
   );
 
   return <FavoriteContext.Provider value={value}>{children}</FavoriteContext.Provider>;

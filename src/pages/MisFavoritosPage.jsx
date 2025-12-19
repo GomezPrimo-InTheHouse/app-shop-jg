@@ -117,5 +117,5 @@ const MisFavoritosPage = () => {
     </div>
   );
 };
-
+ 
 export default MisFavoritosPage;

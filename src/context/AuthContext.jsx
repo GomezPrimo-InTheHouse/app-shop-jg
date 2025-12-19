@@ -360,7 +360,7 @@ export const AuthProvider = ({ children }) => {
     cupon_block_reason: null,
   });
 
-  // 🔁 Hidratar desde localStorage
+  // 🔁 Hidratar desde localStorage (al cargar la app)
   useEffect(() => {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return;
@@ -377,12 +377,15 @@ export const AuthProvider = ({ children }) => {
         cupon_next_available_at: parsed?.cupon_next_available_at ?? null,
         cupon_block_reason: parsed?.cupon_block_reason ?? null,
       });
+
+      // 🔔 AVISAR que hay sesión (rehidratación)
+      window.dispatchEvent(new Event("jg_shop_buyer_changed"));
     } catch {
       localStorage.removeItem(LS_KEY);
     }
   }, []);
 
-  // 💾 Persistir comprador + estado shop (ojo: cuponActivo es solo "sugerencia", NO aplicado)
+  // 💾 Persistir comprador + estado shop
   useEffect(() => {
     const payload = {
       cliente,
@@ -400,18 +403,20 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const payload = {
-      nombre: String(nombre ?? "").trim(),
-      apellido: String(apellido ?? "").trim(),
-      dni: String(dni ?? "").trim(),
-      celular: String(celular ?? "").trim(),     // ✅ incluir
-      email: (email ? String(email).trim() : null), // ✅ opcional
-    };
+        nombre: String(nombre ?? "").trim(),
+        apellido: String(apellido ?? "").trim(),
+        dni: String(dni ?? "").trim(),
+        celular: String(celular ?? "").trim(),
+        email: email ? String(email).trim() : null,
+      };
 
-    const resp = await loginShopApi(payload);
+      const resp = await loginShopApi(payload);
       const data = resp?.data ?? resp;
 
       const clienteResp = data?.cliente ?? null;
-      if (!clienteResp) throw new Error("No se recibió 'cliente' desde /shop/login");
+      if (!clienteResp) {
+        throw new Error("No se recibió 'cliente' desde /shop/login");
+      }
 
       setCliente(clienteResp);
       setCanalCliente(data?.canal_cliente ?? null);
@@ -422,6 +427,9 @@ export const AuthProvider = ({ children }) => {
         cupon_next_available_at: data?.cupon_next_available_at ?? null,
         cupon_block_reason: data?.cupon_block_reason ?? null,
       });
+
+      // 🔔 AVISAR CAMBIO DE SESIÓN (LOGIN)
+      window.dispatchEvent(new Event("jg_shop_buyer_changed"));
 
       // UX mensajes
       if (data?.cupon_activo?.codigo) {
@@ -455,18 +463,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
-   * ✅ invalida el cupón sugerido (cuponActivo) cacheado en AuthContext/localStorage
-   * Útil cuando:
-   * - el usuario realizó una compra intentando usar cupón
-   * - el backend confirma que fue aplicado o que no aplica
+   * ✅ invalida el cupón sugerido
    */
   const invalidateCuponActivo = (options = {}) => {
     const { markBlocked = true, reason = "Cupón no disponible." } = options;
 
-    // eliminar sugerencia
     setCuponActivo(null);
 
-    // opcional: marcar bloqueado para mostrar mensaje en checkout
     setCuponFlags((prev) => ({
       ...prev,
       cupon_creado: false,
@@ -475,6 +478,7 @@ export const AuthProvider = ({ children }) => {
     }));
   };
 
+  // ✅ LOGOUT comprador
   const logout = () => {
     setCliente(null);
     setSesionId(null);
@@ -486,7 +490,11 @@ export const AuthProvider = ({ children }) => {
       cupon_next_available_at: null,
       cupon_block_reason: null,
     });
+
     localStorage.removeItem(LS_KEY);
+
+    // 🔔 AVISAR CAMBIO DE SESIÓN (LOGOUT)
+    window.dispatchEvent(new Event("jg_shop_buyer_changed"));
   };
 
   const value = useMemo(
@@ -511,6 +519,9 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth debe usarse dentro de <AuthProvider />");
+  if (!ctx) {
+    throw new Error("useAuth debe usarse dentro de <AuthProvider />");
+  }
   return ctx;
 };
+

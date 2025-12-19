@@ -154,7 +154,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { useUI } from "../../context/UIContext.jsx";
 import { useFavorites } from "../../context/FavoriteContext.jsx";
 import { useNotification } from "../../context/NotificationContext.jsx";
-
+import Swal from "sweetalert2";
 import LoginModal from "../shop/LoginModal.jsx";
 
 const ShopHeader = () => {
@@ -197,7 +197,26 @@ const ShopHeader = () => {
     openLoginModal();
   };
 
-  const handleLogout = () => logout();
+
+  
+  const handleLogout = () => {
+
+    Swal.fire({
+      title: '¿Estás seguro de que deseas cerrar sesión?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, cerrar sesión',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
+        showNotification("info", "Sesion cerrada correctamente");
+
+      }
+    });
+  }
 
   return (
     <>

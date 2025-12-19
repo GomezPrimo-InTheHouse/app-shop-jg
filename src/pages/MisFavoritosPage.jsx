@@ -5,7 +5,7 @@ import ProductCard from "../components/products/ProductCard.jsx";
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 import { useFavorites } from "../context/FavoriteContext";
 import { useNotification } from "../context/NotificationContext";
-import { useTheme } from "../hooks/useTheme";
+import { useTheme } from "../hook/useTheme";
 
 const MisFavoritosPage = () => {
   const { theme } = useTheme();

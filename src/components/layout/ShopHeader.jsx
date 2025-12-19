@@ -199,24 +199,50 @@ const ShopHeader = () => {
 
 
   
-  const handleLogout = () => {
+const handleLogout = () => {
+  // 1. Detectamos el tema actual para que el modal no "brille" en modo oscuro
+  const isDark = document.documentElement.classList.contains("dark");
 
-    Swal.fire({
-      title: '¿Estás seguro de que deseas cerrar sesión?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, cerrar sesión',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        logout();
-        showNotification("info", "Sesion cerrada correctamente");
+  Swal.fire({
+    title: "¿Cerrar sesión?",
+    text: "Tendrás que volver a ingresar tus credenciales para realizar una compra.",
+    icon: "warning",
+    iconColor: isDark ? "#fbbf24" : "#f59e0b", // Amber 400 o 500
+    
+    // Adaptación de colores de fondo y texto según el tema
+    background: isDark ? "#0f172a" : "#ffffff", // slate-950 o blanco
+    color: isDark ? "#f1f5f9" : "#0f172a",      // slate-100 o slate-950
+    
+    showCancelButton: true,
+    confirmButtonText: "Sí, cerrar sesión",
+    cancelButtonText: "Cancelar",
 
-      }
-    });
-  }
+    // IMPORTANTE: Desactivar estilos por defecto para usar Tailwind
+    buttonsStyling: false,
+    
+    customClass: {
+      popup: "rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl",
+      title: "text-2xl font-black italic uppercase tracking-tight",
+      htmlContainer: "text-slate-500 dark:text-slate-400 font-medium",
+      confirmButton: `
+        order-2 inline-flex items-center justify-center rounded-full 
+        px-8 py-3 text-sm font-bold bg-indigo-600 text-white 
+        hover:bg-indigo-700 transition-all active:scale-95 ml-3
+      `,
+      cancelButton: `
+        order-1 inline-flex items-center justify-center rounded-full 
+        px-8 py-3 text-sm font-bold border border-slate-300 dark:border-slate-700 
+        text-slate-700 dark:text-slate-300 hover:bg-slate-100 
+        dark:hover:bg-white/5 transition-all
+      `
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      logout();
+      showNotification("success", "Sesión cerrada. ¡Vuelve pronto!");
+    }
+  });
+};
 
   return (
     <>

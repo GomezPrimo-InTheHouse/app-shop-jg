@@ -278,23 +278,34 @@ const ConfirmacionCompraPage = () => {
     return v ? Number(v) : null;
   }, [location.search]);
 
-  // 2. Definir el payload inicial (Prioriza lo remoto, luego el state del navigate)
-  const payload = remote || location.state || null;
-
-  // 3. Si no hay datos, pero hay ID en la URL, los buscamos en la API
+  /**
+   * 2. Lógica de Carga API-First
+   * Eliminamos "!payload" para que, aunque exista location.state, 
+   * el componente igual refresque los datos desde el servidor.
+   */
   useEffect(() => {
-    if (ventaIdFromQS && !payload) {
+    if (ventaIdFromQS) {
       setLoadingRemote(true);
       getVentaByIdApi(ventaIdFromQS)
-        .then((res) => setRemote(res?.data || res))
-        .catch(console.error)
+        .then((res) => {
+          // Guardamos lo que diga el servidor como verdad absoluta
+          setRemote(res?.data || res);
+        })
+        .catch((err) => {
+          console.error("Error cargando venta desde API:", err);
+        })
         .finally(() => setLoadingRemote(false));
     }
-  }, [ventaIdFromQS, payload]);
+  }, [ventaIdFromQS]); // Solo depende del ID
 
-  // --- 🚀 AQUÍ VA LA LÓGICA DE NORMALIZACIÓN QUE TE PASÉ ---
-  
-  // Extraemos y normalizamos para que la UI no se rompa nunca
+  /**
+   * 3. Definición del Payload
+   * Mientras 'remote' es null (cargando), podemos mostrar 'location.state' 
+   * para que la UI no se vea vacía, pero en cuanto llegue 'remote', este ganará.
+   */
+  const payload = remote || location.state || null;
+
+  // --- NORMALIZACIÓN (Igual que antes, pero ahora los datos vienen seguros de la API) ---
   const venta = payload?.venta || payload; 
   const detalles = payload?.detalles || payload?.items || [];
   const total_bruto = payload?.total_bruto || venta?.total_bruto || 0;
@@ -306,9 +317,7 @@ const ConfirmacionCompraPage = () => {
     apellido: venta?.apellido || payload?.apellido || ""
   };
 
-  // --- FIN DE LA NORMALIZACIÓN ---
-
-  // 4. Lógica de WhatsApp usando los datos normalizados
+  // 4. WhatsApp (Se mantiene igual, ahora más seguro con datos de API)
   const handleWhatsAppRedirect = () => {
     const productosStr = detalles
       .map((item) => {
@@ -323,7 +332,7 @@ const ConfirmacionCompraPage = () => {
       `*TOTAL:* ${formatARS(total_final)}%0A%0A` +
       `*DETALLE:*${productosStr}%0A%0A` +
       `Adjunto el comprobante de transferencia abajo:`;
-
+      console.log( mensaje );
     window.open(`https://wa.me/5493534275476?text=${mensaje}`, "_blank");
   };
 
@@ -332,18 +341,24 @@ const ConfirmacionCompraPage = () => {
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
   };
+  // ... (Funciones de copiado y renders de carga se mantienen igual)
 
-  if (loadingRemote) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-       <div className="h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
+  if (loadingRemote && !payload) { // Solo mostrar spinner si no hay NADA que mostrar (ni siquiera state)
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+         <div className="h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
-  if (!payload) return (
-    <div className="min-h-screen flex items-center justify-center">
-        <p>No se encontró información del pedido.</p>
-    </div>
-  );
+  if (!payload && !loadingRemote) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
+          <p className="text-slate-400">No encontramos información de tu pedido.</p>
+          <Link to="/" className="text-indigo-400 underline uppercase text-xs font-bold tracking-widest">Ir al inicio</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">

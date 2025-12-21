@@ -64,6 +64,8 @@ const ConfirmacionCompraPage = () => {
       `*TOTAL:* ${formatARS(total)}%0A%0A` +
       `*DETALLE:*${productosStr}%0A%0A` +
       `Adjunto el comprobante de transferencia abajo:`;
+
+      console.log(mensaje);
       
     // Usamos wa.link/qeelcn pero le inyectamos el texto dinámico
     const baseLink = "https://wa.me/5493534275476"; // Reemplaza con el número asociado a tu wa.link

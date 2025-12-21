@@ -40,9 +40,10 @@ const handleConfirmarCompra = async () => {
 
   setLoading(true);
 
+  // 1. Preparar el envío al servidor
   const payload = {
     cliente_id: cliente.id,
-    items: itemsForBackend,
+    items: itemsForBackend, // Normalmente [{id, cantidad}, ...]
     monto_abonado: montoAbonado,
     estado_nombre: "PENDIENTE_PAGO",
     ...(cupon?.codigo ? { codigo_cupon: cupon.codigo } : {}),
@@ -52,41 +53,68 @@ const handleConfirmarCompra = async () => {
     const resp = await crearVentaApi(payload);
     const data = resp?.data ?? resp;
 
-    // ✅ Guardar SIEMPRE el último pedido (pisar cualquier pedido viejo)
-    const saved = { ...data, saved_at: Date.now() };
+    /**
+     * 🔥 PASO CRÍTICO: ENRIQUECIMIENTO DE DATOS
+     * Si el backend devuelve la venta pero sin los detalles de productos o cliente,
+     * los inyectamos aquí usando la información que YA tenemos en el frontend.
+     */
+    const enrichedData = {
+      ...data,
+      // Aseguramos que 'venta' contenga los datos del cliente para la UI/WhatsApp
+      venta: {
+        ...(data?.venta || data),
+        cliente: data?.venta?.cliente || data?.cliente || cliente 
+      },
+      // Aseguramos que 'detalles' contenga nombres e imágenes de productos
+      detalles: (data?.detalles || data?.items) ? (data?.detalles || data?.items) : itemsForBackend.map(item => ({
+        producto_id: item.id,
+        producto_nombre: item.nombre || item.producto_nombre || item.titulo,
+        cantidad: item.cantidad,
+        subtotal: (item.precio_oferta || item.precio) * item.cantidad,
+        imagen_url: item.imagen_url || item.imagen
+      })),
+      total_bruto: data?.total_bruto || totalAmount,
+      descuento: data?.descuento || (totalAmount - (totalConDescuento || totalAmount)),
+      total_final: data?.total_final || totalConDescuento || totalAmount
+    };
+
+    // ✅ Guardar en LocalStorage para persistencia ante recargas
+    const saved = { ...enrichedData, saved_at: Date.now() };
     try {
       localStorage.setItem(LS_LAST_ORDER, JSON.stringify(saved));
-    } catch {}
+    } catch (lsError) {
+      console.warn("No se pudo guardar en LS", lsError);
+    }
 
-    // ✅ Si se intentó usar cupón, invalidar sugerencia del Auth
+    // ✅ Gestión de cupones
     if (payload.codigo_cupon) {
       invalidateCuponActivo?.({
-        markBlocked: Number(data?.descuento ?? 0) > 0,
-        reason: Number(data?.descuento ?? 0) > 0
-          ? "Cupón utilizado."
-          : "Cupón no aplicable / ya usado.",
+        markBlocked: Number(enrichedData.descuento) > 0,
+        reason: Number(enrichedData.descuento) > 0
+          ? "Cupón utilizado con éxito."
+          : "Cupón no aplicable.",
       });
     }
 
-    // ✅ limpiar carrito y cupón (orden correcto)
+    // ✅ Limpieza de estados globales (Orden importante: primero limpiar, luego navegar)
     clearCart();
     limpiarCupon?.();
 
-    showNotification("success", "Compra registrada correctamente.");
+    showNotification("success", "¡Pedido realizado! Coordiná el pago por WhatsApp.");
 
-    // ✅ CLAVE: pasar venta_id en la URL (esto salva mobile)
-    const ventaId = data?.venta?.id ?? data?.venta_id ?? null;
+    // ✅ Navegación con QueryString (seguridad) y State (datos completos)
+    const ventaId = data?.venta?.id ?? data?.venta_id ?? data?.id;
     const qs = ventaId ? `?venta_id=${ventaId}` : "";
 
     navigate(`/shop/confirmacion${qs}`, { state: saved });
-  } catch (error) {
-    console.error("Error creando venta", error);
 
+  } catch (error) {
+    console.error("Error al procesar la compra:", error);
     const backendMsg =
       error?.response?.data?.message ||
       error?.response?.data?.error ||
-      "No se pudo registrar la compra.";
-
+      "Ocurrió un error al registrar tu pedido. Por favor intentá nuevamente.";
+    
     showNotification("error", backendMsg);
   } finally {
     setLoading(false);

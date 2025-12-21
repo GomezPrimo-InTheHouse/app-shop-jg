@@ -71,7 +71,7 @@ const handleConfirmarCompra = async () => {
         producto_nombre: item.nombre || item.producto_nombre || item.titulo,
         cantidad: item.cantidad,
         subtotal: (item.precio_oferta || item.precio) * item.cantidad,
-        imagen_url: item.imagen_url || item.imagen
+        foto_url: item.foto_url || item.imagen
       })),
       total_bruto: data?.total_bruto || totalAmount,
       descuento: data?.descuento || (totalAmount - (totalConDescuento || totalAmount)),

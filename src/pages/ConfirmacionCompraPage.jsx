@@ -477,7 +477,7 @@ const ConfirmacionCompraPage = () => {
               <div key={idx} className="flex items-center gap-4 py-4 border-b border-slate-100 dark:border-white/5 last:border-0">
                 <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
                   <img 
-                    src={getSafeUrl(item.imagen_url) || "https://placehold.co/100x100?text=JG"} 
+                    src={getSafeUrl(item.foto_url) || "https://placehold.co/100x100?text=JG"} 
                     alt={item.producto_nombre || item.producto?.nombre} 
                     className="h-full w-full object-cover" 
                   />

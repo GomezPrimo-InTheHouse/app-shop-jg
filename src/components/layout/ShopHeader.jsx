@@ -125,11 +125,10 @@ const ShopHeader = () => {
               src={logoJG}
               alt={LOGO_ALT}
               className="
-      h-9 w-auto object-contain
-      brightness-0 invert
-      transition-transform duration-300
-      hover:scale-105
-    "
+               h-20 md:h-24 lg:h-28 
+              object-contain rounded-full transition-all duration-300
+              hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_10px_rgba(79,163,209,0.5)]
+            "
               draggable="false"
             />
             <span className="text-base font-semibold text-slate-50 tracking-tight">

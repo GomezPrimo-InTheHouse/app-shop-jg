@@ -517,27 +517,38 @@ const ConfirmacionCompraPage = () => {
       apellido: venta?.apellido || payload?.apellido || "",
     };
 
-  // WhatsApp (igual que lo tenías)
+  
   const handleWhatsAppRedirect = () => {
-    const productosStr = (Array.isArray(detalles) ? detalles : [])
-      .map((item) => {
-        const nombre =
-          item?.producto_nombre || item?.producto?.nombre || "Producto";
-        return `%0A• ${nombre} (x${item?.cantidad ?? 1})`;
-      })
-      .join("");
+  // 1. Validamos que tengamos detalles para no enviar un mensaje vacío
+  const listaProductos = Array.isArray(detalles) ? detalles : [];
+  
+  // 2. Construimos el string de productos con limpieza de strings
+  const productosTexto = listaProductos
+    .map((item) => {
+      const nombre = item?.producto_nombre || item?.producto?.nombre || "Producto";
+      const cant = item?.cantidad ?? 1;
+      return `• ${nombre} (x${cant})`;
+    })
+    .join("\n");
 
-    const mensaje =
-      `¡Hola JG SHOP! 👋%0A%0A` +
-      `*NUEVO PEDIDO:* #${venta?.id || "S/N"}%0A` +
-      `*CLIENTE:* ${datosCliente.nombre} ${datosCliente.apellido}%0A` +
-      `*TOTAL:* ${formatARS(total_final)}%0A%0A` +
-      `*DETALLE:*${productosStr}%0A%0A` +
-      `Adjunto el comprobante de transferencia abajo:`;
+  // 3. Construimos el cuerpo del mensaje (usando saltos de línea naturales \n)
+  const mensajeFormateado = 
+    `¡Hola JG SHOP! 👋\n\n` +
+    `*NUEVO PEDIDO:* #${venta?.id || "S/N"}\n` +
+    `*CLIENTE:* ${datosCliente.nombre} ${datosCliente.apellido}\n` +
+    `*TOTAL:* ${formatARS(total_final)}\n\n` +
+    `*DETALLE:*\n${productosTexto}\n\n` +
+    `Adjunto el comprobante de transferencia abajo:`;
 
-    window.open(`https://wa.me/5493534275476?text=${mensaje}`, "_blank");
-  };
+  /**
+   * 4. EL SECRETO: encodeURIComponent
+   * Esto convierte automáticamente los emojis, espacios, asteriscos y el 
+   * símbolo de pesos ($) a un formato que WhatsApp entiende perfectamente.
+   */
+  const mensajeFinal = encodeURIComponent(mensajeFormateado);
 
+  window.open(`https://wa.me/5493534275476?text=${mensajeFinal}`, "_blank");
+};
   const copyToClipboard = (text, field) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
@@ -704,66 +715,67 @@ const ConfirmacionCompraPage = () => {
         </div>
 
         {/* DETALLE PRODUCTOS ABAJO */}
-        <div className="mt-12 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 md:p-12">
-          <h2 className="font-black italic uppercase text-xl mb-10 border-l-4 border-indigo-500 pl-4 text-white">
-            Tu Selección
-          </h2>
+<section className="mt-12 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 p-8 md:p-12 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors duration-500">
+  <div className="flex items-center justify-between mb-10">
+    <h2 className="font-black italic uppercase text-2xl border-l-4 border-indigo-500 pl-4 text-slate-900 dark:text-white tracking-tight">
+      Tu Selección
+    </h2>
+    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full">
+      {detalles.length} Artículos
+    </span>
+  </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-            {(Array.isArray(detalles) ? detalles : []).map((item, idx) => {
-              // ✅ Nombre (tu JSON trae producto_nombre)
-              const nombre =
-                item?.producto_nombre ||
-                item?.producto?.nombre ||
-                `Producto #${item?.producto_id ?? ""}`;
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-2">
+    {(Array.isArray(detalles) ? detalles : []).map((item, idx) => {
+      const nombre = item?.producto_nombre || item?.producto?.nombre || `Producto #${item?.producto_id ?? ""}`;
+      const img = item?.imagen_url || item?.foto_url || item?.producto?.imagen_url || item?.producto?.foto_url || null;
+      const cantidad = Number(item?.cantidad ?? 1);
+      const subtotal = item?.subtotal ?? (cantidad * Number(item?.precio_unitario ?? 0));
 
-              // ✅ Imagen (tu JSON trae imagen_url)
-              const img =
-                item?.imagen_url ||
-                item?.foto_url ||
-                item?.producto?.imagen_url ||
-                item?.producto?.foto_url ||
-                null;
+      return (
+        <div
+          key={item?.id ?? `${item?.producto_id ?? "p"}-${idx}`}
+          className="group flex items-center gap-5 py-5 border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] px-2 -mx-2 rounded-2xl transition-all duration-300"
+        >
+          {/* Contenedor de Imagen con Ratio Fijo */}
+          <div className="relative h-20 w-20 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 flex-shrink-0 shadow-sm border border-slate-200/50 dark:border-white/5">
+            <img
+              src={getSafeUrl(img) || "https://placehold.co/100x100?text=JG"}
+              alt={nombre}
+              className="h-full w-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+              loading="lazy"
+            />
+            {/* Overlay sutil en dark mode */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent hidden dark:block" />
+          </div>
 
-              // ✅ Subtotal (tu JSON trae subtotal, si falta lo calculamos)
-              const cantidad = Number(item?.cantidad ?? 1);
-              const precioUnit = Number(item?.precio_unitario ?? 0);
-              const subtotal =
-                item?.subtotal ??
-                item?.total ??
-                (cantidad * precioUnit);
+          <div className="flex-1 min-w-0 space-y-1">
+            <h4 className="font-black italic uppercase text-xs md:text-sm truncate text-slate-800 dark:text-slate-100 tracking-wide">
+              {nombre}
+            </h4>
+            <div className="flex items-center gap-3">
+              <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold uppercase italic bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">
+                CANT: {cantidad}
+              </p>
+              {item?.precio_unitario && (
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase italic">
+                  u. {formatARS(item.precio_unitario)}
+                </span>
+              )}
+            </div>
+          </div>
 
-              return (
-                <div
-                  key={item?.id ?? `${item?.producto_id ?? "p"}-${idx}`}
-                  className="flex items-center gap-4 py-4 border-b border-slate-100 dark:border-white/5 last:border-0"
-                >
-                  <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
-                    <img
-                      src={getSafeUrl(img) || "https://placehold.co/100x100?text=JG"}
-                      alt={nombre}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-black italic uppercase text-[11px] truncate text-white">
-                      {nombre}
-                    </h4>
-                    <p className="text-[9px] text-indigo-500 font-bold uppercase italic">
-                      CANT: {cantidad}
-                    </p>
-                  </div>
-
-                  <div className="font-black italic text-sm text-white">
-                    {formatARS(subtotal)}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="text-right flex flex-col items-end">
+            <span className="font-black italic text-base text-slate-900 dark:text-white">
+              {formatARS(subtotal)}
+            </span>
+            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Subtotal</span>
           </div>
         </div>
+      );
+    })}
+  </div>
+</section>
       </main>
     </div>
   );

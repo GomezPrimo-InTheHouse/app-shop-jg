@@ -1,18 +1,27 @@
-// import { useEffect, useMemo, useState } from "react";
+
+
+// import { useEffect, useMemo, useRef, useState } from "react";
 // import { useLocation, Link } from "react-router-dom";
-// import { 
-//   CheckCircle2, ReceiptText, Package, ArrowLeft, 
-//   AlertTriangle, Copy, Check, ShoppingBag, ExternalLink
+// import {
+//   CheckCircle2,
+//   ReceiptText,
+//   ArrowLeft,
+//   Copy,
+//   Check,
+//   ShoppingBag,
+//   ExternalLink,
 // } from "lucide-react";
 // import ShopHeader from "../components/layout/ShopHeader.jsx";
 // import { getVentaByIdApi } from "../api/shopApi";
 
-// const LS_LAST_ORDER = "jg_shop_last_order";
-// const API_URL = import.meta.env.VITE_API_URL_BACKEND?.replace('/shop', '') || "";
+// // ⚠️ Solo para armar URLs de imágenes si vienen como path relativo.
+// // Tu VITE_API_URL_BACKEND suele ser ".../shop". Acá le quitamos "/shop".
+// const API_URL =
+//   import.meta.env.VITE_API_URL_BACKEND?.replace("/shop", "") || "";
 
 // const getSafeUrl = (path) => {
 //   if (!path) return null;
-//   if (path.startsWith("http")) return path;
+//   if (String(path).startsWith("http")) return path;
 //   return `${API_URL}${path}`;
 // };
 
@@ -29,47 +38,128 @@
 //   const [loadingRemote, setLoadingRemote] = useState(false);
 //   const [copiedField, setCopiedField] = useState(null);
 
-//   // --- LÓGICA DE DATOS ---
+//   // ✅ Para evitar múltiples calls por re-renders (StrictMode / etc)
+//   const lastFetchedIdRef = useRef(null);
+
+//   // 1) Obtener ID de la venta de la URL
 //   const ventaIdFromQS = useMemo(() => {
 //     const sp = new URLSearchParams(location.search);
 //     const v = sp.get("venta_id");
-//     return v ? Number(v) : null;
+//     const n = v ? Number(v) : null;
+//     return Number.isFinite(n) ? n : null;
 //   }, [location.search]);
 
+//   /**
+//    * 2) API-FIRST SIEMPRE:
+//    * - Si hay venta_id => SIEMPRE fetch al backend.
+//    * - Aunque exista location.state, lo usamos solo como fallback visual mientras carga.
+//    */
+//   useEffect(() => {
+//     if (!ventaIdFromQS) return;
+
+//     // evita refetch del mismo id en re-renders
+//     if (lastFetchedIdRef.current === ventaIdFromQS) return;
+//     lastFetchedIdRef.current = ventaIdFromQS;
+
+//     setLoadingRemote(true);
+
+//     getVentaByIdApi(ventaIdFromQS)
+//       .then((res) => {
+//         // axios: resp?.data, pero tu helper ya retorna data o resp
+//         const data = res?.data ?? res;
+//         setRemote(data);
+//       })
+//       .catch((err) => {
+//         console.error("Error cargando venta desde API:", err);
+//         // si falla, liberamos el lock para permitir reintentar (por ejemplo, cambiando QS)
+//         lastFetchedIdRef.current = null;
+//       })
+//       .finally(() => setLoadingRemote(false));
+//   }, [ventaIdFromQS]);
+
+//   /**
+//    * 3) Payload:
+//    * Mientras remote llega, mostramos location.state para que no quede “vacío”.
+//    * Cuando llega remote, gana remote.
+//    */
 //   const payload = remote || location.state || null;
 
-//   useEffect(() => {
-//     if (ventaIdFromQS && !payload) {
-//       setLoadingRemote(true);
-//       getVentaByIdApi(ventaIdFromQS)
-//         .then((res) => setRemote(res?.data || res))
-//         .catch(console.error)
-//         .finally(() => setLoadingRemote(false));
-//     }
-//   }, [ventaIdFromQS, payload]);
+//   // Si está cargando y NO hay nada que mostrar aún
+//   if (loadingRemote && !payload) {
+//     return (
+//       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+//         <div className="h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+//       </div>
+//     );
+//   }
 
-//   // --- LÓGICA DE WHATSAPP (RECUPERADA Y MEJORADA) ---
-//  const handleWhatsAppRedirect = () => {
-//   const v = venta || {};
-//   const d = detalles || [];
-  
-//   const productosStr = d
-//     .map((item) => {
-//       // Intentamos obtener el nombre de cualquier lugar posible
-//       const nombre = item.producto_nombre || item.producto?.nombre || "Producto";
-//       return `%0A• ${nombre} (x${item.cantidad})`;
-//     })
-//     .join("");
-  
-//   const mensaje = `¡Hola JG SHOP! 👋%0A%0A` +
-//     `*NUEVO PEDIDO:* #${v.id || "S/N"}%0A` +
-//     `*CLIENTE:* ${datosCliente.nombre} ${datosCliente.apellido}%0A` +
-//     `*TOTAL:* ${formatARS(total_final)}%0A%0A` +
-//     `*DETALLE:*${productosStr}%0A%0A` +
-//     `Adjunto el comprobante de transferencia abajo:`;
+//   // Si no hay venta_id o no hay payload
+//   if (!ventaIdFromQS && !payload) {
+//     return (
+//       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
+//         <p className="text-slate-400">No encontramos información de tu pedido.</p>
+//         <Link
+//           to="/"
+//           className="text-indigo-400 underline uppercase text-xs font-bold tracking-widest"
+//         >
+//           Ir al inicio
+//         </Link>
+//       </div>
+//     );
+//   }
 
-//   window.open(`https://wa.me/5493534275476?text=${mensaje}`, "_blank");
-// };
+//   if (!payload && !loadingRemote) {
+//     return (
+//       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
+//         <p className="text-slate-400">No encontramos información de tu pedido.</p>
+//         <Link
+//           to="/"
+//           className="text-indigo-400 underline uppercase text-xs font-bold tracking-widest"
+//         >
+//           Ir al inicio
+//         </Link>
+//       </div>
+//     );
+//   }
+
+//   // --- NORMALIZACIÓN (sin cambiar tu UI, solo robustez) ---
+//   const venta = payload?.venta || payload;
+//   const detalles = payload?.detalles || payload?.items || [];
+
+//   const total_bruto =
+//     payload?.total_bruto ?? venta?.total_bruto ?? venta?.total ?? 0;
+//   const descuento = payload?.descuento ?? venta?.descuento ?? 0;
+//   const total_final =
+//     payload?.total_final ??
+//     venta?.total_final ??
+//     (Number(total_bruto || 0) - Number(descuento || 0));
+
+//   const datosCliente =
+//     venta?.cliente || {
+//       nombre: venta?.nombre || payload?.nombre || "Cliente",
+//       apellido: venta?.apellido || payload?.apellido || "",
+//     };
+
+//   // WhatsApp (igual que lo tenías)
+//   const handleWhatsAppRedirect = () => {
+//     const productosStr = (Array.isArray(detalles) ? detalles : [])
+//       .map((item) => {
+//         const nombre =
+//           item?.producto_nombre || item?.producto?.nombre || "Producto";
+//         return `%0A• ${nombre} (x${item?.cantidad ?? 1})`;
+//       })
+//       .join("");
+
+//     const mensaje =
+//       `¡Hola JG SHOP! 👋%0A%0A` +
+//       `*NUEVO PEDIDO:* #${venta?.id || "S/N"}%0A` +
+//       `*CLIENTE:* ${datosCliente.nombre} ${datosCliente.apellido}%0A` +
+//       `*TOTAL:* ${formatARS(total_final)}%0A%0A` +
+//       `*DETALLE:*${productosStr}%0A%0A` +
+//       `Adjunto el comprobante de transferencia abajo:`;
+
+//     window.open(`https://wa.me/5493534275476?text=${mensaje}`, "_blank");
+//   };
 
 //   const copyToClipboard = (text, field) => {
 //     navigator.clipboard.writeText(text);
@@ -77,82 +167,95 @@
 //     setTimeout(() => setCopiedField(null), 2000);
 //   };
 
-//   if (loadingRemote) return (
-//     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-//       <div className="h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-//     </div>
-//   );
-
-//   if (!payload) return null;
-
-//   const { venta, detalles, total_bruto, descuento, total_final } = payload;
-
 //   return (
 //     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 //       <ShopHeader />
-      
+
 //       <main className="max-w-7xl mx-auto px-4 py-12">
 //         {/* HEADER ÉXITO */}
 //         <div className="text-center mb-16 animate-in fade-in zoom-in duration-500">
 //           <div className="h-20 w-20 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-6 ring-1 ring-emerald-500/30">
 //             <CheckCircle2 className="h-10 w-10 text-emerald-500" />
 //           </div>
-//           <h1 className="text-5xl font-black italic uppercase tracking-tighter">Pedido Recibido</h1>
+//           <h1 className="text-5xl font-black italic uppercase tracking-tighter">
+//             Pedido Recibido
+//           </h1>
 //           <p className="text-slate-400 font-bold tracking-widest uppercase text-xs mt-2">
 //             JG SHOP OFFICIAL • ORDEN #{venta?.id}
+//             {loadingRemote ? " • actualizando..." : ""}
 //           </p>
 //         </div>
 
 //         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-//           {/* BLOQUE DE PAGOS SIMÉTRICOS */}
+//           {/* BLOQUE IZQUIERDO: PAGOS */}
 //           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
-            
 //             {/* CARD TRANSFERENCIA */}
 //             <div className="rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 flex flex-col shadow-sm">
 //               <div className="flex items-center gap-3 mb-8">
 //                 <ReceiptText className="h-6 w-6 text-indigo-500" />
-//                 <h3 className="font-black italic uppercase text-xl">Transferencia</h3>
+//                 <h3 className="font-black italic uppercase text-xl text-white">
+//                   Transferencia
+//                 </h3>
 //               </div>
 
 //               <div className="flex-1 space-y-6">
 //                 <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 space-y-4">
 //                   <div className="text-sm">
 //                     <p className="font-bold text-base">Julian Agustin Gomez</p>
-//                     <p className="text-xs text-slate-500 italic">Brubank | CUIT 20-39173125-0</p>
+//                     <p className="text-xs text-slate-500 italic">
+//                       Brubank | CUIT 20-39173125-0
+//                     </p>
 //                   </div>
 
 //                   <div className="space-y-2">
-//                     <button 
-//                       onClick={() => copyToClipboard("1430001713017789840017", "cbu")}
+//                     <button
+//                       onClick={() =>
+//                         copyToClipboard("1430001713017789840017", "cbu")
+//                       }
 //                       className="w-full flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-indigo-500 transition-colors group"
 //                     >
-//                       <span className="text-[10px] font-mono font-bold">CBU: ...840017</span>
-//                       {copiedField === 'cbu' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-slate-400 group-hover:text-indigo-500" />}
+//                       <span className="text-[10px] font-mono font-bold">
+//                         CBU: ...840017
+//                       </span>
+//                       {copiedField === "cbu" ? (
+//                         <Check className="h-4 w-4 text-emerald-500" />
+//                       ) : (
+//                         <Copy className="h-4 w-4 text-slate-400 group-hover:text-indigo-500" />
+//                       )}
 //                     </button>
-//                     <button 
+
+//                     <button
 //                       onClick={() => copyToClipboard("julian.gomez.inf", "alias")}
 //                       className="w-full flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-indigo-500 transition-colors group"
 //                     >
-//                       <span className="text-[10px] font-mono font-bold">ALIAS: julian.gomez.inf</span>
-//                       {copiedField === 'alias' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-slate-400 group-hover:text-indigo-500" />}
+//                       <span className="text-[10px] font-mono font-bold">
+//                         ALIAS: julian.gomez.inf
+//                       </span>
+//                       {copiedField === "alias" ? (
+//                         <Check className="h-4 w-4 text-emerald-500" />
+//                       ) : (
+//                         <Copy className="h-4 w-4 text-slate-400 group-hover:text-indigo-500" />
+//                       )}
 //                     </button>
 //                   </div>
 //                 </div>
 
 //                 <div className="mt-auto text-center">
 //                   <div className="inline-block bg-white p-3 rounded-2xl shadow-lg border border-slate-100 mb-3">
-//                     <img 
-//                       src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=julian.gomez.inf" 
-//                       alt="QR" className="h-24 w-24 grayscale dark:grayscale-0"
+//                     <img
+//                       src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=julian.gomez.inf`}
+//                       alt="QR"
+//                       className="h-24 w-24"
 //                     />
 //                   </div>
-//                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Escaneá para pagar</p>
+//                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+//                     Escaneá para pagar
+//                   </p>
 //                 </div>
 //               </div>
 //             </div>
 
-//             {/* CARD WHATSAPP CON FUNCIÓN DINÁMICA */}
+//             {/* CARD WHATSAPP */}
 //             <div className="rounded-[2.5rem] bg-indigo-600 p-8 text-white flex flex-col shadow-xl shadow-indigo-500/20">
 //               <div className="flex items-center gap-3 mb-8">
 //                 <ShoppingBag className="h-6 w-6" />
@@ -161,52 +264,62 @@
 
 //               <div className="flex-1 flex flex-col justify-between">
 //                 <div>
-//                   <h4 className="text-2xl font-black italic uppercase mb-4 leading-tight">Acción Rápida</h4>
+//                   <h4 className="text-2xl font-black italic uppercase mb-4 leading-tight">
+//                     Acción Rápida
+//                   </h4>
 //                   <p className="text-indigo-100 text-sm font-medium leading-relaxed mb-6">
-//                     Al presionar este botón se generará un mensaje automático con el detalle de tu pedido listo para enviar.
-//                     Si ya realizaste la transferencia, adjuntá el comprobante en el chat de WhatsApp para agilizar el proceso.
+//                     Hola {datosCliente.nombre}, al presionar el botón enviaremos tu
+//                     pedido #{venta?.id} por WhatsApp para coordinar la entrega.
 //                   </p>
 //                 </div>
 
 //                 <div className="mt-auto">
-//                   <button 
+//                   <button
 //                     onClick={handleWhatsAppRedirect}
 //                     className="flex w-full items-center justify-center gap-3 rounded-full bg-white py-6 text-sm font-black italic uppercase text-indigo-600 hover:bg-slate-50 transition-all active:scale-95 shadow-xl group"
 //                   >
 //                     Enviar Pedido
-//                     <ExternalLink className="h-4 w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+//                     <ExternalLink className="h-4 w-4" />
 //                   </button>
-//                   <p className="text-center text-[10px] font-bold text-indigo-200 uppercase tracking-widest mt-4 italic">JG Shop via WhatsApp</p>
 //                 </div>
 //               </div>
 //             </div>
 //           </div>
 
-//           {/* RESUMEN DERECHA */}
+//           {/* ASIDE DERECHO: TOTALES */}
 //           <aside className="lg:col-span-1">
 //             <div className="rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 shadow-lg sticky top-8">
-//               <h3 className="font-black italic uppercase text-[10px] tracking-[0.3em] text-indigo-500 mb-8 text-center">Estado de Cuenta</h3>
-              
+//               <h3 className="font-black italic uppercase text-[10px] tracking-[0.3em] text-indigo-500 mb-8 text-center">
+//                 Estado de Cuenta
+//               </h3>
+
 //               <div className="space-y-4 mb-8">
 //                 <div className="flex justify-between text-xs font-bold uppercase italic">
 //                   <span className="text-slate-400">Subtotal</span>
 //                   <span>{formatARS(total_bruto)}</span>
 //                 </div>
-//                 {descuento > 0 && (
+
+//                 {Number(descuento) > 0 && (
 //                   <div className="flex justify-between text-xs font-bold uppercase italic text-emerald-500">
 //                     <span>Bonificación</span>
 //                     <span>-{formatARS(descuento)}</span>
 //                   </div>
 //                 )}
+
 //                 <div className="pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col items-center">
-//                   <span className="text-[9px] font-black uppercase text-slate-400 mb-1 italic">Total Final</span>
+//                   <span className="text-[9px] font-black uppercase text-slate-400 mb-1 italic">
+//                     Total Final
+//                   </span>
 //                   <span className="text-5xl font-black italic text-indigo-600 dark:text-indigo-400 leading-none">
 //                     {formatARS(total_final)}
 //                   </span>
 //                 </div>
 //               </div>
 
-//               <Link to="/" className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-slate-200 dark:border-white/10 py-5 text-[10px] font-black italic uppercase hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+//               <Link
+//                 to="/"
+//                 className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-slate-200 dark:border-white/10 py-5 text-[10px] font-black italic uppercase hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-white"
+//               >
 //                 <ArrowLeft className="h-3 w-3" /> Volver a la Tienda
 //               </Link>
 //             </div>
@@ -215,21 +328,39 @@
 
 //         {/* DETALLE PRODUCTOS ABAJO */}
 //         <div className="mt-12 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 md:p-12">
-//           <h2 className="font-black italic uppercase text-xl mb-10 border-l-4 border-indigo-500 pl-4">Tu Selección</h2>
+//           <h2 className="font-black italic uppercase text-xl mb-10 border-l-4 border-indigo-500 pl-4 text-white">
+//             Tu Selección
+//           </h2>
+
 //           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-//             {detalles.map((item, idx) => (
-//               <div key={idx} className="flex items-center gap-4 py-4 border-b border-slate-100 dark:border-white/5 last:border-0">
+//             {(Array.isArray(detalles) ? detalles : []).map((item, idx) => (
+//               <div
+//                 key={item?.id ?? `${item?.producto_id ?? "p"}-${idx}`}
+//                 className="flex items-center gap-4 py-4 border-b border-slate-100 dark:border-white/5 last:border-0"
+//               >
 //                 <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
-//                   <img 
-//                     src={getSafeUrl(item.imagen_url) || "https://placehold.co/100x100?text=JG"} 
-//                     alt={item.producto_nombre} className="h-full w-full object-cover" 
+//                   <img
+//                     // ✅ Si en detalles viene foto_url como path, lo armamos con API_URL.
+//                     // ✅ Si no viene, usamos un placeholder que NO rompe DNS.
+//                     src={getSafeUrl(item?.foto_url) || "https://placehold.co/100x100?text=JG"}
+//                     alt={item?.producto_nombre || item?.producto?.nombre || "Producto"}
+//                     className="h-full w-full object-cover"
+//                     loading="lazy"
 //                   />
 //                 </div>
-//                 <div className="flex-1">
-//                   <h4 className="font-black italic uppercase text-[11px] truncate">{item.producto_nombre}</h4>
-//                   <p className="text-[9px] text-indigo-500 font-bold uppercase italic">CANT: {item.cantidad}</p>
+
+//                 <div className="flex-1 min-w-0">
+//                   <h4 className="font-black italic uppercase text-[11px] truncate text-white">
+//                     {item?.producto_nombre || item?.producto?.nombre || `Producto #${item?.producto_id ?? ""}`}
+//                   </h4>
+//                   <p className="text-[9px] text-indigo-500 font-bold uppercase italic">
+//                     CANT: {item?.cantidad ?? 1}
+//                   </p>
 //                 </div>
-//                 <div className="font-black italic text-sm">{formatARS(item.subtotal)}</div>
+
+//                 <div className="font-black italic text-sm text-white">
+//                   {formatARS(item?.subtotal ?? item?.total ?? 0)}
+//                 </div>
 //               </div>
 //             ))}
 //           </div>
@@ -240,7 +371,6 @@
 // };
 
 // export default ConfirmacionCompraPage;
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
@@ -365,7 +495,13 @@ const ConfirmacionCompraPage = () => {
 
   // --- NORMALIZACIÓN (sin cambiar tu UI, solo robustez) ---
   const venta = payload?.venta || payload;
-  const detalles = payload?.detalles || payload?.items || [];
+
+  // ✅ puede venir en payload.detalles (como tu JSON), payload.items, o incluso venta.detalles
+  const detalles =
+    payload?.detalles ||
+    payload?.items ||
+    venta?.detalles ||
+    [];
 
   const total_bruto =
     payload?.total_bruto ?? venta?.total_bruto ?? venta?.total ?? 0;
@@ -574,36 +710,58 @@ const ConfirmacionCompraPage = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-            {(Array.isArray(detalles) ? detalles : []).map((item, idx) => (
-              <div
-                key={item?.id ?? `${item?.producto_id ?? "p"}-${idx}`}
-                className="flex items-center gap-4 py-4 border-b border-slate-100 dark:border-white/5 last:border-0"
-              >
-                <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
-                  <img
-                    // ✅ Si en detalles viene foto_url como path, lo armamos con API_URL.
-                    // ✅ Si no viene, usamos un placeholder que NO rompe DNS.
-                    src={getSafeUrl(item?.foto_url) || "https://placehold.co/100x100?text=JG"}
-                    alt={item?.producto_nombre || item?.producto?.nombre || "Producto"}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
+            {(Array.isArray(detalles) ? detalles : []).map((item, idx) => {
+              // ✅ Nombre (tu JSON trae producto_nombre)
+              const nombre =
+                item?.producto_nombre ||
+                item?.producto?.nombre ||
+                `Producto #${item?.producto_id ?? ""}`;
 
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-black italic uppercase text-[11px] truncate text-white">
-                    {item?.producto_nombre || item?.producto?.nombre || `Producto #${item?.producto_id ?? ""}`}
-                  </h4>
-                  <p className="text-[9px] text-indigo-500 font-bold uppercase italic">
-                    CANT: {item?.cantidad ?? 1}
-                  </p>
-                </div>
+              // ✅ Imagen (tu JSON trae imagen_url)
+              const img =
+                item?.imagen_url ||
+                item?.foto_url ||
+                item?.producto?.imagen_url ||
+                item?.producto?.foto_url ||
+                null;
 
-                <div className="font-black italic text-sm text-white">
-                  {formatARS(item?.subtotal ?? item?.total ?? 0)}
+              // ✅ Subtotal (tu JSON trae subtotal, si falta lo calculamos)
+              const cantidad = Number(item?.cantidad ?? 1);
+              const precioUnit = Number(item?.precio_unitario ?? 0);
+              const subtotal =
+                item?.subtotal ??
+                item?.total ??
+                (cantidad * precioUnit);
+
+              return (
+                <div
+                  key={item?.id ?? `${item?.producto_id ?? "p"}-${idx}`}
+                  className="flex items-center gap-4 py-4 border-b border-slate-100 dark:border-white/5 last:border-0"
+                >
+                  <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
+                    <img
+                      src={getSafeUrl(img) || "https://placehold.co/100x100?text=JG"}
+                      alt={nombre}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-black italic uppercase text-[11px] truncate text-white">
+                      {nombre}
+                    </h4>
+                    <p className="text-[9px] text-indigo-500 font-bold uppercase italic">
+                      CANT: {cantidad}
+                    </p>
+                  </div>
+
+                  <div className="font-black italic text-sm text-white">
+                    {formatARS(subtotal)}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>

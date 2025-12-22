@@ -11,7 +11,7 @@ import { useNotification } from "../../context/NotificationContext.jsx";
 import Swal from "sweetalert2";
 import LoginModal from "../shop/LoginModal.jsx";
 
-import logoJG from "../../assets/logo-1-sin-fondo.png";
+import logoJG from "../../assets/logo-2-sinfondo-blanco.png";
 
 const LOGO_ALT = "Logo de JG Informática";
 
@@ -110,31 +110,29 @@ const ShopHeader = () => {
   const baseLogo =
     "h-9 w-auto object-contain transition-all duration-300 hover:scale-105";
 
-  const logoClass = useMemo(() => {
-    return isScrolled || isMenuOpen
-      ? "invert brightness-110 dark:invert-0 dark:brightness-100"
-      : "brightness-0 invert-[0.15] dark:brightness-100 dark:invert-0";
-  }, [isScrolled, isMenuOpen]);
+  // const logoClass = useMemo(() => {
+  //   return isScrolled || isMenuOpen
+  //     ? "invert brightness-110 dark:invert-0 dark:brightness-100"
+  //     : "brightness-0 invert-[0.15] dark:brightness-100 dark:invert-0";
+  // }, [isScrolled, isMenuOpen]);
 
   return (
     <>
       <header className="w-full border-b border-slate-800 bg-slate-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src={logoJG}
-              alt={LOGO_ALT}
-              className="
-               h-20 md:h-24 lg:h-28 
-              object-contain rounded-full transition-all duration-300
-              hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_10px_rgba(79,163,209,0.5)]
-            "
-              draggable="false"
-            />
-            <span className="text-base font-semibold text-slate-50 tracking-tight">
-               - JG Shop
-            </span>
-          </Link>
+          <Link to="/" className="flex items-center gap-3">
+
+          <img
+            src={logoJG}
+            alt={LOGO_ALT}
+            draggable="false"
+            className={`${baseLogo} $`}
+          />
+  
+          <span className="text-lg md:text-xl font-semibold text-slate-50 tracking-tight">
+            JG Shop
+          </span>
+      </Link>
 
           {/* Acciones derecha */}
           <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">

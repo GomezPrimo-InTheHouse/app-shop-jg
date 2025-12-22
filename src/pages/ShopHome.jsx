@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { ShoppingBag, ShieldCheck, MapPin, Search, X, MessageCircle, ExternalLink } from 'lucide-react';
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 import ProductGrid from "../components/products/ProductGrid.jsx";
+import Logo from '../components/layout/Logo.jsx'
+import logoJG from "../assets/logo-1-sin-fondo.png";
+
 const ShopHome = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
 
@@ -19,7 +22,7 @@ const ShopHome = () => {
         <section className="relative pt-8 pb-12 sm:py-20 overflow-hidden bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
             <div className="flex flex-col lg:flex-row items-center gap-10">
-              
+
               <div className="w-full lg:w-3/5 space-y-6 text-center lg:text-left">
                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest">
                   <span className="relative flex h-2 w-2">
@@ -28,13 +31,25 @@ const ShopHome = () => {
                   </span>
                   Abierto para consultas
                 </span>
-                
-                <h1 className="text-4xl sm:text-7xl font-black tracking-tight leading-[1.1]">
-                  JG <span className="text-indigo-600 dark:text-indigo-500">Informática</span>
-                </h1>
-                
+
+                {/* <Logo className="mx-auto lg:mx-0" /> */}
+                <img
+                  src={logoJG}
+                  alt="test"
+                  style={{  width: "auto" }}
+                  className='
+                  
+                    h-12 sm:h-16 md:h-28 lg:h-32 xl:h-36
+                    w-auto object-contain
+                    dark:invert invert-0
+                    transition-all duration-300
+                    sm:hover:scale-105 sm:hover:drop-shadow-[0_0_10px_rgba(79,163,209,0.5)]'
+                  
+                  draggable="false"
+                />
+
                 <p className="text-base sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                  Tu tienda de confianza para accesorios y tecnología. 
+                  Tu tienda de confianza para accesorios y tecnología.
                   <span className="block font-semibold text-slate-800 dark:text-slate-200 mt-2">
                     Consultá stock en tiempo real por WhatsApp.
                   </span>
@@ -42,21 +57,21 @@ const ShopHome = () => {
 
                 {/* GRUPO DE BOTONES OPTIMIZADO PARA MOBILE */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <a 
-                    href="https://wa.link/qeelcn" 
-                    target="_blank" 
+                  <a
+                    href="https://wa.link/qeelcn"
+                    target="_blank"
                     rel="noreferrer"
                     className="flex items-center justify-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-500/20 transition-all active:scale-95"
                   >
                     <MessageCircle fill="currentColor" />
                     Consultar WhatsApp
                   </a>
-                  <button 
+                  <button
                     onClick={() => setIsMapOpen(true)}
                     className="flex items-center justify-center gap-3 px-8 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold text-lg transition-all active:scale-95"
                   >
                     <MapPin className="text-indigo-500" />
-                    Ver Ubicación
+                    Ver Ubicación del local
                   </button>
                 </div>
               </div>
@@ -64,15 +79,37 @@ const ShopHome = () => {
               {/* TRUST BADGES - GRID ADAPTATIVO */}
               <div className="grid grid-cols-2 gap-3 w-full lg:w-2/5">
                 {[
-                  { label: "Stock", val: "+150 Art.", color: "bg-blue-500" },
-                  { label: "Garantía", val: "Oficial", color: "bg-purple-500" },
-                  { label: "Atención", val: "Personal", color: "bg-orange-500" },
-                  { label: "Envíos", val: "Locales", color: "bg-emerald-500" },
+                  { label: "Amplio Stock", val: "+1500 Art.", color: "bg-blue-500", icon: "📦" },
+                  { label: "Envíos locales", val: "Oficial", color: "bg-purple-500", icon: "🚚" },
+                  { label: "Atención 1 a 1", val: "Personal", color: "bg-orange-500", icon: "🤝" },
+                  { label: "Retiro en tienda", val: "Local físico", color: "bg-emerald-500", icon: "🚚" },
                 ].map((item, i) => (
-                  <div key={i} className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1">{item.label}</p>
-                    <p className="text-lg font-bold">{item.val}</p>
+                  <div
+                    key={i}
+                    className="
+    p-4 rounded-2xl text-center transition-all duration-300
+
+    bg-gradient-to-br from-white to-slate-50
+    border border-slate-200
+    shadow-sm hover:shadow-md hover:-translate-y-0.5
+
+    dark:bg-slate-900
+    dark:border-slate-800
+    dark:shadow-none dark:hover:shadow-none
+  "
+                  >
+
+                    <span className="text-xl">{item.icon}</span>
+
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 mb-1">
+                      {item.label}
+                    </p>
+
+                    <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {item.val}
+                    </p>
                   </div>
+
                 ))}
               </div>
             </div>
@@ -86,7 +123,7 @@ const ShopHome = () => {
               <ShoppingBag className="text-indigo-500" />
               Nuestros Productos
             </h2>
-            
+
           </div>
           <ProductGrid />
         </div>
@@ -97,7 +134,7 @@ const ShopHome = () => {
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setIsMapOpen(false)}></div>
-          
+
           <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
             <div className="flex items-center justify-between p-5 border-b dark:border-slate-800">
               <div className="flex items-center gap-3">
@@ -110,23 +147,23 @@ const ShopHome = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             {/* Contenedor del Iframe Responsivo */}
             <div className="relative w-full h-[60vh] sm:h-[450px] bg-slate-200 dark:bg-slate-800">
-              <iframe 
+              <iframe
                 src={googleMapsSrc}
                 className="absolute inset-0 w-full h-full border-0"
-                allowFullScreen="" 
-                loading="lazy" 
+                allowFullScreen=""
+                loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               ></iframe>
             </div>
-            
+
             <div className="p-5 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 dark:bg-slate-800/50">
               <p className="text-sm text-slate-500 text-center sm:text-left">
                 Visitános en nuestro local para asesoramiento técnico.
               </p>
-              <a 
+              <a
                 href="https://www.google.com/maps/dir//TU+UBICACION+AQUI" // Agregá tu link de Google Maps Directo
                 target="_blank"
                 rel="noreferrer"
@@ -141,7 +178,7 @@ const ShopHome = () => {
       )}
 
       {/* BOTÓN FLOTANTE WHATSAPP (Solo Mobile) */}
-      <a 
+      <a
         href="https://wa.link/qeelcn"
         target="_blank"
         rel="noreferrer"

@@ -120,16 +120,20 @@ const ShopHeader = () => {
     <>
       <header className="w-full border-b border-slate-800 bg-slate-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <img
               src={logoJG}
               alt={LOGO_ALT}
-              className={`${baseLogo} ${logoClass}`}
+              className="
+      h-9 w-auto object-contain
+      brightness-0 invert
+      transition-transform duration-300
+      hover:scale-105
+    "
               draggable="false"
             />
             <span className="text-base font-semibold text-slate-50 tracking-tight">
-              JG Shop
+               - JG Shop
             </span>
           </Link>
 

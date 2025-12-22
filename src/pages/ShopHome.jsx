@@ -1,7 +1,7 @@
 
 
 import React, { useState } from 'react';
-import { ShoppingBag, ShieldCheck, MapPin, Search, X, MessageCircle, ExternalLink } from 'lucide-react';
+import { ShoppingBag, ShieldCheck, MapPin, Search, X, MessageCircle, ExternalLink, Store } from 'lucide-react';
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 import ProductGrid from "../components/products/ProductGrid.jsx";
 import Logo from '../components/layout/Logo.jsx'
@@ -64,19 +64,76 @@ const ShopHome = () => {
                   <a
                     href="https://wa.link/qeelcn"
                     target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-500/20 transition-all active:scale-95"
+                    rel="noopener noreferrer"
+                    className="
+                    inline-flex items-center justify-center gap-3
+                    px-8 py-4
+                    rounded-2xl
+                    font-bold text-lg
+
+                    bg-emerald-500 text-white
+                    hover:bg-emerald-600
+                    active:scale-95
+
+                    shadow-lg shadow-emerald-500/25
+                    transition-all duration-200
+                    focus:outline-none focus:ring-2 focus:ring-emerald-400/50
+                  "
                   >
-                    <MessageCircle fill="currentColor" />
-                    Consultar WhatsApp
+                    <MessageCircle className="h-5 w-5" />
+                    <span>WhatsApp</span>
                   </a>
+
                   <button
+                    type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="flex items-center justify-center gap-3 px-8 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold text-lg transition-all active:scale-95"
+                    className="
+                    inline-flex items-center justify-center gap-3
+                    px-8 py-4
+                    rounded-2xl
+                    font-semibold text-lg
+
+                    bg-slate-100 text-slate-800
+                    hover:bg-slate-200
+
+                    dark:bg-slate-800 dark:text-slate-200
+                    dark:hover:bg-slate-700
+
+                    transition-all duration-200
+                    active:scale-95
+                    focus:outline-none focus:ring-2 focus:ring-indigo-400/40
+  "
                   >
-                    <MapPin className="text-indigo-500" />
-                    Ver Ubicación del local
+                    <MapPin className="h-5 w-5 text-indigo-500" />
+                    <span>Ubicación</span>
                   </button>
+
+                  <a
+                    href="https://web-jg-informatica.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="
+    inline-flex items-center justify-center gap-2
+    px-7 py-3.5
+    rounded-2xl
+    font-semibold text-base
+
+    bg-slate-100 text-slate-800
+    hover:bg-slate-200
+
+    dark:bg-slate-800 dark:text-slate-200
+    dark:hover:bg-slate-700
+
+    transition-all duration-200
+    active:scale-95
+  "
+                  >
+                    <Store className="h-5 w-5 text-indigo-500" />
+                    <span>Visitar la web</span>
+                    <ExternalLink className="h-4 w-4 opacity-60" />
+                  </a>
+
+
                 </div>
               </div>
 
@@ -89,8 +146,8 @@ const ShopHome = () => {
                   { label: "Retiro en tienda", val: "Local físico", color: "bg-emerald-500", icon: "🚚" },
                 ].map((item, i) => (
                   <div
-  key={i}
-  className="
+                    key={i}
+                    className="
     p-4 rounded-2xl text-center transition-all duration-300
 
     /* LIGHT MODE */
@@ -103,7 +160,7 @@ const ShopHome = () => {
     dark:border-slate-800
     dark:shadow-none dark:hover:shadow-none
   "
->
+                  >
 
 
                     <span className="text-xl">{item.icon}</span>

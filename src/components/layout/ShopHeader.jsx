@@ -156,6 +156,23 @@ import { useFavorites } from "../../context/FavoriteContext.jsx";
 import { useNotification } from "../../context/NotificationContext.jsx";
 import Swal from "sweetalert2";
 import LoginModal from "../shop/LoginModal.jsx";
+import logoJG from "../../assets/logo-1-sin-fondo.png";
+
+// Logo + estilo dinámico (con dark mode)
+const LOGO_SRC = logoJG;
+const LOGO_ALT = "Logo de JG Informática";
+
+const baseLogo =
+  "h-20 md:h-24 lg:h-28 object-contain rounded-full transition-all duration-300 " +
+  "hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_10px_rgba(79,163,209,0.5)]";
+
+const logoClass = (isScrolled || isMenuOpen)
+  ? // cuando hay fondo / header activo (scrolled o menú abierto)
+  // en light: invert para que contraste, en dark: normalmente no hace falta invertir tanto
+  "invert brightness-110 dark:invert-0 dark:brightness-100"
+  : // cuando está “libre” (sin scroll/menú)
+  // en light: un toque más oscuro, en dark: lo dejamos más neutro
+  "brightness-0 invert-[0.15] dark:brightness-100 dark:invert-0";
 
 const ShopHeader = () => {
   const navigate = useNavigate();
@@ -198,59 +215,72 @@ const ShopHeader = () => {
   };
 
 
-  
-const handleLogout = () => {
-  // 1. Detectamos el tema actual para que el modal no "brille" en modo oscuro
-  const isDark = document.documentElement.classList.contains("dark");
 
-  Swal.fire({
-    title: "¿Cerrar sesión?",
-    text: "Tendrás que volver a ingresar tus credenciales para realizar una compra.",
-    icon: "warning",
-    iconColor: isDark ? "#fbbf24" : "#f59e0b", // Amber 400 o 500
-    
-    // Adaptación de colores de fondo y texto según el tema
-    background: isDark ? "#0f172a" : "#ffffff", // slate-950 o blanco
-    color: isDark ? "#f1f5f9" : "#0f172a",      // slate-100 o slate-950
-    
-    showCancelButton: true,
-    confirmButtonText: "Sí, cerrar sesión",
-    cancelButtonText: "Cancelar",
+  const handleLogout = () => {
+    // 1. Detectamos el tema actual para que el modal no "brille" en modo oscuro
+    const isDark = document.documentElement.classList.contains("dark");
 
-    // IMPORTANTE: Desactivar estilos por defecto para usar Tailwind
-    buttonsStyling: false,
-    
-    customClass: {
-      popup: "rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl",
-      title: "text-2xl font-black italic uppercase tracking-tight",
-      htmlContainer: "text-slate-500 dark:text-slate-400 font-medium",
-      confirmButton: `
+    Swal.fire({
+      title: "¿Cerrar sesión?",
+      text: "Tendrás que volver a ingresar tus credenciales para realizar una compra.",
+      icon: "warning",
+      iconColor: isDark ? "#fbbf24" : "#f59e0b", // Amber 400 o 500
+
+      // Adaptación de colores de fondo y texto según el tema
+      background: isDark ? "#0f172a" : "#ffffff", // slate-950 o blanco
+      color: isDark ? "#f1f5f9" : "#0f172a",      // slate-100 o slate-950
+
+      showCancelButton: true,
+      confirmButtonText: "Sí, cerrar sesión",
+      cancelButtonText: "Cancelar",
+
+      // IMPORTANTE: Desactivar estilos por defecto para usar Tailwind
+      buttonsStyling: false,
+
+      customClass: {
+        popup: "rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl",
+        title: "text-2xl font-black italic uppercase tracking-tight",
+        htmlContainer: "text-slate-500 dark:text-slate-400 font-medium",
+        confirmButton: `
         order-2 inline-flex items-center justify-center rounded-full 
         px-8 py-3 text-sm font-bold bg-indigo-600 text-white 
         hover:bg-indigo-700 transition-all active:scale-95 ml-3
       `,
-      cancelButton: `
+        cancelButton: `
         order-1 inline-flex items-center justify-center rounded-full 
         px-8 py-3 text-sm font-bold border border-slate-300 dark:border-slate-700 
         text-slate-700 dark:text-slate-300 hover:bg-slate-100 
         dark:hover:bg-white/5 transition-all
       `
-    }
-  }).then((result) => {
-    if (result.isConfirmed) {
-      logout();
-      showNotification("success", "Sesión cerrada. ¡Vuelve pronto!");
-    }
-  });
-};
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
+        showNotification("success", "Sesión cerrada. ¡Vuelve pronto!");
+      }
+    });
+  };
 
   return (
     <>
       <header className="w-full border-b border-slate-800 bg-slate-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           {/* Logo */}
-          <Link to="/" className="text-base font-semibold text-slate-50 tracking-tight">
-            JG Shop
+          <Link to="/" className="flex items-center gap-2">
+            <img
+              src={logoJG}
+              alt="Logo de JG Informática"
+              className="
+      h-9 w-auto object-contain transition-all duration-300
+      hover:scale-105
+      brightness-0 invert-[0.15]
+      dark:brightness-100 dark:invert-0
+    "
+              draggable="false"
+            />
+            <span className="text-base font-semibold text-slate-50 tracking-tight">
+              JG Shop
+            </span>
           </Link>
 
           {/* Acciones derecha */}

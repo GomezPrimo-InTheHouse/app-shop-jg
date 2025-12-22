@@ -35,18 +35,22 @@ const ShopHome = () => {
                 {/* <Logo className="mx-auto lg:mx-0" /> */}
                 <img
                   src={logoJG}
-                  alt="test"
-                  style={{  width: "auto" }}
-                  className='
-                  
-                    h-12 sm:h-16 md:h-28 lg:h-32 xl:h-36
-                    w-auto object-contain
-                    dark:invert invert-0
-                    transition-all duration-300
-                    sm:hover:scale-105 sm:hover:drop-shadow-[0_0_10px_rgba(79,163,209,0.5)]'
-                  
+                  alt="Logo de JG Informática"
+                  style={{
+                    height: "clamp(8rem, 18vw, 20rem)",
+                    width: "auto",
+                    transition: "transform 0.3s ease, filter 0.3s ease",
+                  }}
+                  className="
+                  mx-auto lg:mx-0
+                  invert-0
+                  dark:invert
+                  sm:hover:scale-105
+                  sm:hover:drop-shadow-[0_0_10px_rgba(79,163,209,0.5)]
+                "
                   draggable="false"
                 />
+
 
                 <p className="text-base sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                   Tu tienda de confianza para accesorios y tecnología.
@@ -85,19 +89,22 @@ const ShopHome = () => {
                   { label: "Retiro en tienda", val: "Local físico", color: "bg-emerald-500", icon: "🚚" },
                 ].map((item, i) => (
                   <div
-                    key={i}
-                    className="
+  key={i}
+  className="
     p-4 rounded-2xl text-center transition-all duration-300
 
+    /* LIGHT MODE */
     bg-gradient-to-br from-white to-slate-50
     border border-slate-200
     shadow-sm hover:shadow-md hover:-translate-y-0.5
 
-    dark:bg-slate-900
+    /* DARK MODE */
+    dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950
     dark:border-slate-800
     dark:shadow-none dark:hover:shadow-none
   "
-                  >
+>
+
 
                     <span className="text-xl">{item.icon}</span>
 

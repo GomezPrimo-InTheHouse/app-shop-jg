@@ -384,7 +384,7 @@ import {
 } from "lucide-react";
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 import { getVentaByIdApi } from "../api/shopApi";
-
+import QRBrubank from "../assets/QR-BRUBANK.jpg";
 // ⚠️ Solo para armar URLs de imágenes si vienen como path relativo.
 // Tu VITE_API_URL_BACKEND suele ser ".../shop". Acá le quitamos "/shop".
 const API_URL =
@@ -628,18 +628,18 @@ const ConfirmacionCompraPage = () => {
                   </div>
                 </div>
 
-                <div className="mt-auto text-center">
+                {/* <div className="mt-auto text-center">
                   <div className="inline-block bg-white p-3 rounded-2xl shadow-lg border border-slate-100 mb-3">
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=julian.gomez.inf`}
+                      src={QRBrubank}
                       alt="QR"
-                      className="h-24 w-24"
+                      className="h-30 w-30"
                     />
                   </div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
                     Escaneá para pagar
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
 

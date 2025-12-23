@@ -1,11 +1,15 @@
 // src/components/cart/CartDrawer.jsx
-import { X } from "lucide-react";
+import { X, MapPin, ExternalLink } from "lucide-react";
+import { useState } from "react";
 import { useCart } from "../../context/CartContext.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, } from "react-router-dom";
+import { } from "lucide-react";
 
 const CartDrawer = () => {
   const { items, isCartOpen, closeCart, totalAmount, removeItem } = useCart();
   const navigate = useNavigate();
+  const googleMapsSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3368.012063720076!2d-63.2356383239807!3d-32.418834945426866!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95cc43da9e9efa5d%3A0xb7299c488061375c!2sJulian%20Gomez%20Inform%C3%A1tica!5e0!3m2!1ses!2sar!4v1765998900707!5m2!1ses!2sar";
+  const [modalOpen, setModalOpen] = useState(false);
 
   // 🔧 Fix: proteger por si value viene undefined / null
   const formatPrice = (value) => {
@@ -109,14 +113,19 @@ const CartDrawer = () => {
         {/* FOOTER */}
         <footer className="border-t border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 px-4 py-4 space-y-4 shadow-lg">
 
-          {/* BOTÓN FARMACITY */}
+          {/* BOTÓN MAPS */}
           <button
-            className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700
-                       text-white text-sm font-semibold py-3 shadow-lg transition
-                       dark:bg-indigo-500 dark:hover:bg-indigo-600"
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="w-full inline-flex items-center justify-center gap-2
+             rounded-xl border border-slate-700 bg-slate-900
+             px-4 py-3 text-sm font-semibold text-slate-100
+             hover:border-indigo-400 hover:bg-slate-800 transition-colors"
           >
-            Ver puntos de retiro · Envío Gratis
+            <MapPin size={18} />
+            Ver ubicación del local
           </button>
+
 
           {/* TOTAL */}
           <div className="flex items-center justify-between text-sm py-1">
@@ -153,6 +162,68 @@ const CartDrawer = () => {
           </button>
         </footer>
       </aside>
+
+      {/* --- MODAL DE MAPA OPTIMIZADO --- */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"
+            onClick={() => setModalOpen(false)}
+          />
+
+          <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
+            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
+                  <MapPin size={20} />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100">
+                  Nuestra Ubicación
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-300 hover:opacity-90"
+                aria-label="Cerrar"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Contenedor del Iframe Responsivo */}
+            <div className="relative w-full h-[60vh] sm:h-[450px] bg-slate-200 dark:bg-slate-800">
+              <iframe
+                src={googleMapsSrc}
+                className="absolute inset-0 w-full h-full border-0"
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Mapa - JG Informática"
+              />
+            </div>
+
+            <div className="p-5 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-sm text-slate-600 dark:text-slate-300 text-center sm:text-left">
+                Visitános en nuestro local para asesoramiento técnico.
+              </p>
+
+              <a
+                href="https://www.google.com/maps/dir//Julian+Gomez+Inform%C3%A1tica"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm transition-colors"
+              >
+                Abrir en Google Maps
+                <ExternalLink size={16} />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 };

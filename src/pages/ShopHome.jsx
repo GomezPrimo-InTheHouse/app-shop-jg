@@ -228,7 +228,8 @@ const ShopHome = () => {
                 Visitános en nuestro local para asesoramiento técnico.
               </p>
               <a
-                href="https://www.google.com/maps/dir//TU+UBICACION+AQUI" // Agregá tu link de Google Maps Directo
+              
+                href="https://maps.app.goo.gl/d4SKQPMojpRQtica6" // Agregá tu link de Google Maps Directo
                 target="_blank"
                 rel="noreferrer"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm"

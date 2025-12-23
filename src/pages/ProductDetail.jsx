@@ -381,7 +381,7 @@ const ProductDetail = () => {
     });
 
     const msg = `Hola! Vi este producto en la tienda web y quiero más info:\n\n${product.nombre} - ${formatted}`;
-    const url = `https://wa.me/5493525660000?text=${encodeURIComponent(msg)}`;
+    const url = `https://wa.me/5493534275476?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
   };
 

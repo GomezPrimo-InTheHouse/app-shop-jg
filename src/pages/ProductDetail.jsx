@@ -501,43 +501,44 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-2">
 
           {/* ── Imagen ── */}
-          <div className="relative bg-slate-100 dark:bg-slate-800">
-            <div className="aspect-square w-full overflow-hidden">
-              <img
-                src={product.foto_url}
-                alt={product.nombre}
-                onError={handleImageError}
-                className="h-full w-full object-cover"
-              />
-            </div>
+         {/* ── Imagen ── */}
+<div className="relative bg-slate-50 dark:bg-slate-900">
+  <div className="aspect-square w-full flex items-center justify-center overflow-hidden">
+    <img
+      src={product.foto_url}
+      alt={product.nombre}
+      onError={handleImageError}
+      className="h-full w-full object-contain p-4"
+    />
+  </div>
 
-            {/* Badge oferta — minimalista negro/blanco */}
-            {hasOffer && (
-              <span className="absolute left-4 top-4 rounded-full bg-slate-900 px-3 py-1 dark:bg-white">
-                <span className="text-xs font-semibold text-white dark:text-slate-900">
-                  -{offerPct}% OFF
-                </span>
-              </span>
-            )}
+  {/* Badge oferta */}
+  {hasOffer && (
+    <span className="absolute left-4 top-4 rounded-full bg-slate-900 px-3 py-1 dark:bg-white">
+      <span className="text-xs font-semibold text-white dark:text-slate-900">
+        -{offerPct}% OFF
+      </span>
+    </span>
+  )}
 
-            {/* Favorito */}
-            <button
-              type="button"
-              onClick={() => toggleFavorite(product)}
-              aria-label={fav ? "Quitar de favoritos" : "Agregar a favoritos"}
-              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 backdrop-blur-sm transition hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:hover:bg-slate-900"
-            >
-              {pending ? (
-                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-              ) : (
-                <Heart
-                  className={`h-4 w-4 transition ${
-                    fav ? "fill-rose-500 text-rose-500" : "text-slate-400"
-                  }`}
-                />
-              )}
-            </button>
-          </div>
+  {/* Favorito */}
+  <button
+    type="button"
+    onClick={() => toggleFavorite(product)}
+    aria-label={fav ? "Quitar de favoritos" : "Agregar a favoritos"}
+    className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 backdrop-blur-sm transition hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:hover:bg-slate-900"
+  >
+    {pending ? (
+      <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+    ) : (
+      <Heart
+        className={`h-4 w-4 transition ${
+          fav ? "fill-rose-500 text-rose-500" : "text-slate-400"
+        }`}
+      />
+    )}
+  </button>
+</div>
 
           {/* ── Info ── */}
           <div className="flex flex-col justify-between p-6 sm:p-8">

@@ -279,10 +279,17 @@ const CouponInput = () => {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/70 backdrop-blur-sm p-4 space-y-2">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+    <section className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 space-y-2">
+      <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
         Cupón
-      </h3>
+      </h2>
+
+      {/* Sin identificar todavía: no sabemos si tiene cupón */}
+      {!cliente?.id && (
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Al completar tus datos te mostramos si tenés un cupón de descuento.
+        </p>
+      )}
 
       {/* Cupón aplicado (Checkout) */}
       {hasCuponAplicado && (
@@ -339,6 +346,7 @@ const CouponInput = () => {
           </button>
         </div>
       ) : (
+        cliente?.id &&
         !hasCuponAplicado &&
         !cuponFlags?.cupon_bloqueado && (
           <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -346,7 +354,7 @@ const CouponInput = () => {
           </p>
         )
       )}
-    </div>
+    </section>
   );
 };
 

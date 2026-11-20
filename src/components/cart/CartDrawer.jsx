@@ -1,12 +1,11 @@
 // src/components/cart/CartDrawer.jsx
-import { X, MapPin, ExternalLink } from "lucide-react";
+import { X, MapPin, ExternalLink, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "../../context/CartContext.jsx";
-import { useNavigate, } from "react-router-dom";
-import { } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CartDrawer = () => {
-  const { items, isCartOpen, closeCart, totalAmount, removeItem } = useCart();
+  const { items, isCartOpen, closeCart, totalAmount, removeItem, updateQuantity } = useCart();
   const navigate = useNavigate();
   const googleMapsSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3368.012063720076!2d-63.2356383239807!3d-32.418834945426866!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95cc43da9e9efa5d%3A0xb7299c488061375c!2sJulian%20Gomez%20Inform%C3%A1tica!5e0!3m2!1ses!2sar!4v1765998900707!5m2!1ses!2sar";
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,9 +20,10 @@ const CartDrawer = () => {
     });
   };
 
+  // Solo cerramos el drawer: el cliente sigue en la página donde estaba
+  // (antes navigate(-1) podía sacarlo del sitio si entró por un link directo).
   const handleContinueShopping = () => {
     closeCart();
-    navigate(-1);
   };
 
   return (
@@ -93,16 +93,41 @@ const CartDrawer = () => {
                     {item.nombre}
                   </p>
 
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                      {formatPrice(item.precio)} x {item.quantity}
+                      {formatPrice(item.precio * item.quantity)}
                     </span>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="text-[11px] text-red-500 hover:text-red-400"
-                    >
-                      Quitar
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center rounded-full border border-slate-300 dark:border-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          aria-label={`Restar una unidad de ${item.nombre}`}
+                          className="p-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="min-w-[1.5rem] text-center font-semibold tabular-nums" aria-live="polite">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          aria-label={`Sumar una unidad de ${item.nombre}`}
+                          className="p-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="text-[11px] text-red-600 hover:text-red-500 dark:text-red-400"
+                      >
+                        Quitar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

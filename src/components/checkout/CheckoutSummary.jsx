@@ -1,134 +1,64 @@
-// // src/components/checkout/CheckoutSummary.jsx
-// import { useCart } from "../../context/CartContext";
-// import { useCoupon } from "../../context/CouponContext";
-
-// const CheckoutSummary = () => {
-//   const { items, totalAmount } = useCart();
-//   const { descuentoMonto, totalConDescuento } = useCoupon();
-
-//   const subtotal = totalAmount ?? 0;
-//   const totalFinal = totalConDescuento ?? subtotal;
-
-//   return (
-//     <div
-//       className="rounded-xl border border-gray-200 dark:border-gray-800
-//                  bg-white/70 dark:bg-gray-950/70
-//                  backdrop-blur-sm p-4 space-y-3"
-//     >
-//       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-//         Resumen de compra
-//       </h3>
-
-//       <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300 max-h-40 overflow-y-auto pr-1">
-//         {items.map((item) => (
-//           <li
-//             key={item.id}
-//             className="flex justify-between gap-2"
-//           >
-//             <span className="truncate">
-//               {item.nombre}{" "}
-//               <span className="text-gray-500 dark:text-gray-400">
-//                 x{item.quantity}
-//               </span>
-//             </span>
-//             <span>
-//               $
-//               {(
-//                 Number(item.precio ?? 0) * Number(item.quantity ?? 0)
-//               ).toLocaleString("es-AR")}
-//             </span>
-//           </li>
-//         ))}
-//       </ul>
-
-//       <div className="border-t border-gray-200 dark:border-gray-800 pt-2 space-y-1 text-sm">
-//         <div className="flex justify-between text-gray-700 dark:text-gray-300">
-//           <span>Subtotal</span>
-//           <span>
-//             $
-//             {Number(subtotal).toLocaleString("es-AR")}
-//           </span>
-//         </div>
-
-//         {descuentoMonto > 0 && (
-//           <div className="flex justify-between text-emerald-600 dark:text-emerald-400 text-sm">
-//             <span>Descuento</span>
-//             <span>
-//               -
-//               {Number(descuentoMonto ?? 0).toLocaleString("es-AR")}
-//             </span>
-//           </div>
-//         )}
-
-//         <div className="flex justify-between text-gray-900 dark:text-gray-100 font-semibold pt-1">
-//           <span>Total</span>
-//           <span>
-//             $
-//             {Number(totalFinal ?? 0).toLocaleString("es-AR")}
-//           </span>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default CheckoutSummary;
 // src/components/checkout/CheckoutSummary.jsx
 import { useCart } from "../../context/CartContext";
-import { useCoupon } from "../../context/CouponContext";
+import { useCheckoutTotals } from "../../hook/useCheckoutTotals";
+
+const formatARS = (value) =>
+  Number(value || 0).toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  });
 
 const CheckoutSummary = () => {
-  const { items, totalAmount } = useCart();
-  const { descuentoMonto, totalConDescuento, hasCuponAplicado } = useCoupon();
-
-  const subtotal = Number(totalAmount ?? 0);
-
-  // ✅ total final solo usa totalConDescuento si hay cupón aplicado
-  const totalFinal = hasCuponAplicado
-    ? Number(totalConDescuento ?? subtotal)
-    : subtotal;
+  const { items } = useCart();
+  const { subtotal, descuento, totalFinal, hasDescuento } = useCheckoutTotals();
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/70 backdrop-blur-sm p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-        Resumen de compra
-      </h3>
+    <section className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 space-y-3">
+      <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+        Tu pedido
+      </h2>
 
-      <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300 max-h-40 overflow-y-auto pr-1">
+      <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300 max-h-64 overflow-y-auto pr-1">
         {items.map((item) => {
           const qty = Number(item.quantity ?? 0);
           const price = Number(item.precio ?? 0);
           return (
-            <li key={item.id} className="flex justify-between gap-2">
-              <span className="truncate">
+            <li key={item.id} className="flex items-center gap-3">
+              <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
+                {item.foto_url && (
+                  <img src={item.foto_url} alt="" className="h-full w-full object-cover" />
+                )}
+              </div>
+              <span className="flex-1 min-w-0 truncate">
                 {item.nombre}{" "}
                 <span className="text-gray-500 dark:text-gray-400">x{qty}</span>
               </span>
-              <span>${(price * qty).toLocaleString("es-AR")}</span>
+              <span className="tabular-nums">{formatARS(price * qty)}</span>
             </li>
           );
         })}
       </ul>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 pt-2 space-y-1 text-sm">
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-3 space-y-1 text-sm">
         <div className="flex justify-between text-gray-700 dark:text-gray-300">
           <span>Subtotal</span>
-          <span>${subtotal.toLocaleString("es-AR")}</span>
+          <span className="tabular-nums">{formatARS(subtotal)}</span>
         </div>
 
-        {hasCuponAplicado && descuentoMonto > 0 && (
-          <div className="flex justify-between text-emerald-600 dark:text-emerald-400 text-sm">
+        {hasDescuento && (
+          <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
             <span>Descuento</span>
-            <span>-{Number(descuentoMonto).toLocaleString("es-AR")}</span>
+            <span className="tabular-nums">-{formatARS(descuento)}</span>
           </div>
         )}
 
-        <div className="flex justify-between text-gray-900 dark:text-gray-100 font-semibold pt-1">
+        <div className="flex justify-between text-gray-900 dark:text-gray-100 font-semibold text-base pt-1">
           <span>Total</span>
-          <span>${Number(totalFinal ?? 0).toLocaleString("es-AR")}</span>
+          <span className="tabular-nums">{formatARS(totalFinal)}</span>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

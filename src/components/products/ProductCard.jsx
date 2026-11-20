@@ -1,4 +1,3 @@
-
 // import React from "react";
 // import { Link } from "react-router-dom";
 // import { ShoppingBag } from "lucide-react";
@@ -150,11 +149,13 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Heart, Loader2 } from "lucide-react";
+import { ShoppingBag, ShoppingCart, Heart, Loader2 } from "lucide-react";
 import { useFavorites } from "../../context/FavoriteContext.jsx"; // ✅ ajustá si tu estructura es distinta
+import { useCart } from "../../context/CartContext.jsx";
 
 const ProductCard = ({ product }) => {
   const { isFavorite, toggleFavorite, pendingById } = useFavorites();
+  const { addToCart } = useCart();
 
   const formatPrice = (value) =>
     Number(value || 0).toLocaleString("es-AR", {
@@ -312,22 +313,39 @@ const ProductCard = ({ product }) => {
           </div>
         </div>
 
-        {/* Botón CTA */}
-        <Link
-          to={`/producto/${product.id}`}
-          state={{ product }}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg 
-                     px-4 py-2 text-sm font-semibold
-                     bg-indigo-600 text-white shadow-md 
-                     hover:bg-indigo-700 hover:shadow-lg
-                     dark:bg-indigo-500 dark:hover:bg-indigo-600
-                     focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1
-                     dark:focus:ring-offset-gray-900
-                     transition-colors duration-200"
-        >
-          <ShoppingBag className="h-4 w-4" />
-          Ver detalle
-        </Link>
+        {/* CTAs: agregar directo (sin pasar por el detalle) + ver detalle */}
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => addToCart(product, 1)}
+            aria-label={`Agregar ${product.nombre} al carrito`}
+            className="inline-flex items-center justify-center gap-2 rounded-lg
+                       px-3 py-2.5 text-sm font-semibold
+                       bg-indigo-700 text-white shadow-md
+                       hover:bg-indigo-800 hover:shadow-lg
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1
+                       dark:focus-visible:ring-offset-gray-900
+                       transition-colors duration-200"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Agregar
+          </button>
+          <Link
+            to={`/producto/${product.id}`}
+            state={{ product }}
+            className="inline-flex items-center justify-center gap-2 rounded-lg
+                       px-3 py-2.5 text-sm font-semibold
+                       border border-gray-300 text-gray-800 bg-white
+                       hover:bg-gray-100
+                       dark:border-gray-600 dark:text-gray-100 dark:bg-gray-900 dark:hover:bg-gray-800
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1
+                       dark:focus-visible:ring-offset-gray-900
+                       transition-colors duration-200"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Detalle
+          </Link>
+        </div>
       </div>
     </article>
   );

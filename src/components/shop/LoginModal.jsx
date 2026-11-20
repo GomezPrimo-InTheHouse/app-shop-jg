@@ -1,13 +1,10 @@
-
 // src/components/shop/LoginModal.jsx
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { useNotification } from "../../context/NotificationContext";
 
 const LoginModal = ({ isOpen, onClose }) => {
   const { login, loading } = useAuth();
-  const { showNotification } = useNotification();
 
   const firstInputRef = useRef(null);
 
@@ -44,27 +41,13 @@ const LoginModal = ({ isOpen, onClose }) => {
     e.preventDefault();
 
     try {
-      const data = await login(form);
-
-      // data es el response de /shop/login (data?.cliente, data?.cupon_activo, flags, etc.)
-      const cliente = data?.cliente;
-
-      showNotification("success", `Bienvenido/a ${cliente?.nombre ?? ""}!`);
-
-      // ✅ IMPORTANTE:
-      // No aplicar cupón acá. El cupón del login es "sugerido" (AuthContext.cuponActivo),
-      // se aplica recién cuando el usuario toca "Aplicar cupón" en CouponInput.
-      if (data?.cupon_activo?.codigo) {
-        showNotification(
-          "info",
-          `🎁 Tenés un cupón disponible: ${data.cupon_activo.codigo} (${data.cupon_activo.descuento_porcentaje}% OFF)`
-        );
-      }
-
+      // AuthContext.login ya muestra el aviso de bienvenida / cupón disponible.
+      // Antes este modal mostraba otros 2 avisos y se pisaban entre sí.
+      await login(form);
       onClose?.();
     } catch (error) {
+      // El mensaje de error también lo muestra AuthContext.login
       console.error(error);
-      showNotification("error", "No se pudo iniciar sesión. Verificá los datos.");
     }
   };
 
@@ -86,7 +69,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base sm:text-lg font-semibold">Ingresar</h2>
+            <h2 className="text-base sm:text-lg font-semibold">Tus datos</h2>
 
             <button
               type="button"
@@ -100,7 +83,7 @@ const LoginModal = ({ isOpen, onClose }) => {
           </div>
 
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Completá tus datos para guardar tus compras y cupones.
+            Los usamos para registrar tu pedido y coordinar la entrega por WhatsApp.
           </p>
 
           <form className="space-y-3" onSubmit={handleSubmit}>
@@ -113,6 +96,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                   ref={firstInputRef}
                   type="text"
                   name="nombre"
+                  autoComplete="given-name"
                   value={form.nombre}
                   onChange={handleChange}
                   required
@@ -131,6 +115,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                 <input
                   type="text"
                   name="apellido"
+                  autoComplete="family-name"
                   value={form.apellido}
                   onChange={handleChange}
                   required
@@ -149,6 +134,8 @@ const LoginModal = ({ isOpen, onClose }) => {
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 name="dni"
                 value={form.dni}
                 onChange={handleChange}
@@ -165,7 +152,10 @@ const LoginModal = ({ isOpen, onClose }) => {
                 Celular / WhatsApp
               </label>
               <input
-                type="text"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="353 4123456"
                 name="celular"
                 value={form.celular}
                 onChange={handleChange}
@@ -204,7 +194,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                          disabled:cursor-not-allowed
                          text-xs sm:text-sm font-medium text-white py-2.5 transition-colors"
             >
-              {loading ? "Ingresando..." : "Ingresar"}
+              {loading ? "Guardando..." : "Continuar"}
             </button>
           </form>
         </div>

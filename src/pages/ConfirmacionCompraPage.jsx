@@ -1,5 +1,3 @@
-
-
 // // import { useEffect, useMemo, useRef, useState } from "react";
 // // import { useLocation, Link } from "react-router-dom";
 // // import {
@@ -872,6 +870,45 @@ const ConfirmacionCompraPage = () => {
       .finally(() => setLoadingRemote(false));
   }, [ventaIdFromQS]);
 
+  // ── Vuelta desde Mercado Pago ─────────────────────────────────────────────
+  // MP redirige con ?status=approved|pending|rejected (o collection_status).
+  // Es solo una pista: el pago se confirma cuando el webhook lo registra y la
+  // venta pasa a PAGADA en el backend.
+  const mpStatus = useMemo(() => {
+    const sp = new URLSearchParams(location.search);
+    return sp.get("collection_status") || sp.get("status") || null;
+  }, [location.search]);
+
+  const estadoNombre = String(remote?.venta?.estado_nombre || "").toUpperCase();
+  const pagada = estadoNombre === "PAGADA";
+  const [mpError, setMpError] = useState("");
+  const [pollingAgotado, setPollingAgotado] = useState(false);
+  const esperandoPago = mpStatus === "approved" && !pagada && !pollingAgotado;
+
+  // Si MP dice "approved" pero el webhook todavía no llegó, consultamos cada 3s (máx ~45s)
+  useEffect(() => {
+    if (!ventaIdFromQS || !esperandoPago) return;
+    let intentos = 0;
+    const timer = setInterval(async () => {
+      intentos += 1;
+      try {
+        const res = await getVentaByIdApi(ventaIdFromQS);
+        const data = res?.data ?? res;
+        setRemote(data);
+        if (String(data?.venta?.estado_nombre || "").toUpperCase() === "PAGADA") {
+          clearInterval(timer);
+        }
+      } catch {
+        /* reintenta en el próximo tick */
+      }
+      if (intentos >= 15) {
+        clearInterval(timer);
+        setPollingAgotado(true);
+      }
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [ventaIdFromQS, esperandoPago]);
+
   const payload = remote || location.state || null;
 
   if (loadingRemote && !payload) {
@@ -931,34 +968,29 @@ const ConfirmacionCompraPage = () => {
 
   // ── Mercado Pago ──────────────────────────────────────────────────────────
   const handleMercadoPago = async () => {
+    if (!venta?.id) return;
     setLoadingMP(true);
+    setMpError("");
     try {
+      // El backend arma el cobro con los montos de la venta registrada:
+      // solo le mandamos el número de pedido.
       const res = await fetch(`${API}/shop/pagos/mercadopago`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          venta_id: venta?.id,
-          cliente: datosCliente,
-          items: (Array.isArray(detalles) ? detalles : []).map((item) => ({
-            title: item?.producto_nombre || item?.producto?.nombre || "Producto",
-            quantity: Number(item?.cantidad ?? 1),
-            unit_price: Number(item?.precio_unitario ?? 0),
-          })),
-          total: Number(total_final),
-        }),
+        body: JSON.stringify({ venta_id: venta.id }),
       });
-      const data = await res.json();
-      if (data?.init_point) {
-        window.open(data.init_point, "_blank");
-      } else {
-        alert("No se pudo iniciar el pago con Mercado Pago. Intentá por transferencia.");
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.init_point) {
+        // Misma pestaña: en celulares las pestañas nuevas suelen bloquearse
+        window.location.assign(data.init_point);
+        return;
       }
+      setMpError(data?.error || "No pudimos iniciar el pago con Mercado Pago. Probá de nuevo o pagá por transferencia.");
     } catch (err) {
       console.error("Error MP:", err);
-      alert("Error al conectar con Mercado Pago.");
-    } finally {
-      setLoadingMP(false);
+      setMpError("No pudimos conectar con Mercado Pago. Revisá tu conexión e intentá de nuevo.");
     }
+    setLoadingMP(false);
   };
 
   return (
@@ -973,7 +1005,7 @@ const ConfirmacionCompraPage = () => {
             <CheckCircle2 className="h-8 w-8 text-emerald-500" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900 dark:text-white">
-            Pedido recibido
+            {pagada ? "¡Pago aprobado!" : "Pedido recibido"}
           </h1>
           <p className="mt-1.5 text-sm text-slate-400 tracking-widest uppercase">
             JG Shop · Orden #{venta?.id}
@@ -983,7 +1015,46 @@ const ConfirmacionCompraPage = () => {
           </p>
         </div>
 
-        {/* ── 3 cards superiores ── */}
+        {/* ── Estado del pago con Mercado Pago ── */}
+        {pagada && (
+          <div role="status" className="mb-6 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 p-5 text-center">
+            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+              Recibimos tu pago. Te escribimos por WhatsApp para coordinar la entrega.
+            </p>
+          </div>
+        )}
+        {esperandoPago && (
+          <div role="status" className="mb-6 rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 p-5 flex items-center justify-center gap-3">
+            <span className="h-4 w-4 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <p className="text-sm font-medium text-sky-800 dark:text-sky-300">
+              Confirmando tu pago con Mercado Pago…
+            </p>
+          </div>
+        )}
+        {!pagada && pollingAgotado && mpStatus === "approved" && (
+          <div role="status" className="mb-6 rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 p-5 text-center">
+            <p className="text-sm font-medium text-sky-800 dark:text-sky-300">
+              Mercado Pago aprobó tu pago. Puede tardar unos minutos en reflejarse acá; no hace falta que pagues de nuevo.
+            </p>
+          </div>
+        )}
+        {!pagada && (mpStatus === "pending" || mpStatus === "in_process") && (
+          <div role="status" className="mb-6 rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-5 text-center">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              Tu pago está pendiente de acreditación en Mercado Pago. Te avisamos cuando se confirme.
+            </p>
+          </div>
+        )}
+        {!pagada && (mpStatus === "rejected" || mpStatus === "failure") && (
+          <div role="alert" className="mb-6 rounded-2xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-5 text-center">
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+              El pago no se completó. Podés intentarlo de nuevo con otro medio o pagar por transferencia.
+            </p>
+          </div>
+        )}
+
+        {/* ── 3 cards superiores (formas de pago) — se ocultan si ya está pagada ── */}
+        {!pagada && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
           {/* Card 1: Transferencia */}
@@ -1108,6 +1179,14 @@ const ConfirmacionCompraPage = () => {
               {loadingMP ? "Conectando…" : "Pagar con Mercado Pago"}
               {!loadingMP && <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" />}
             </button>
+            <p className="-mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+              Tarjeta de crédito, débito o dinero en cuenta.
+            </p>
+            {mpError && (
+              <p role="alert" className="-mt-2 text-center text-xs text-red-600 dark:text-red-400">
+                {mpError}
+              </p>
+            )}
 
             <Link
               to="/"
@@ -1119,6 +1198,7 @@ const ConfirmacionCompraPage = () => {
             </Link>
           </div>
         </div>
+        )}
 
         {/* ── Detalle de productos ── */}
         <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 sm:p-8">

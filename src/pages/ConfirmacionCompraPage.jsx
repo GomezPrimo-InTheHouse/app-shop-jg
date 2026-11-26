@@ -797,6 +797,7 @@ import {
 } from "lucide-react";
 import ShopHeader from "../components/layout/ShopHeader.jsx";
 import { getVentaByIdApi } from "../api/shopApi";
+import { whatsappUrl } from "../config/contacto";
 
 const API = import.meta.env.VITE_API_URL_BACKEND;
 const API_URL = import.meta.env.VITE_API_URL_BACKEND?.replace("/shop", "") || "";
@@ -963,7 +964,7 @@ const ConfirmacionCompraPage = () => {
       `*DETALLE:*\n${productosTexto}\n\n` +
       `Adjunto el comprobante de transferencia abajo:`;
 
-    window.open(`https://wa.me/5493534275476?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(whatsappUrl(msg), "_blank");
   };
 
   // ── Mercado Pago ──────────────────────────────────────────────────────────

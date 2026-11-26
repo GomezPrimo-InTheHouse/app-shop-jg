@@ -328,6 +328,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { registrarVisualizacionApi } from "../api/shopApi.js";
 import { Heart, Loader2, Share2, ShoppingCart, ArrowLeft, Check } from "lucide-react";
 import { useFavorites } from "../context/FavoriteContext.jsx";
+import { whatsappUrl } from "../config/contacto";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -394,7 +395,7 @@ const ProductDetail = () => {
       style: "currency", currency: "ARS", maximumFractionDigits: 0,
     });
     const msg = `Hola! Vi este producto en la tienda web y quiero más info:\n\n*${product.nombre}* - ${formatted}`;
-    window.open(`https://wa.me/5493534275476?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(whatsappUrl(msg), "_blank");
   };
 
   const handleCompartirWhatsApp = () => {

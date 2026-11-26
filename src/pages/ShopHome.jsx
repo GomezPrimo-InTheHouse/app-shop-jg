@@ -6,6 +6,7 @@ import ShopHeader from "../components/layout/ShopHeader.jsx";
 import ProductGrid from "../components/products/ProductGrid.jsx";
 import Logo from '../components/layout/Logo.jsx'
 import logoJG from "../assets/logo-1-sin-fondo.png";
+import { whatsappUrl } from "../config/contacto";
 
 const ShopHome = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
@@ -62,7 +63,7 @@ const ShopHome = () => {
                 {/* GRUPO DE BOTONES OPTIMIZADO PARA MOBILE */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <a
-                    href="https://wa.link/qeelcn"
+                    href={whatsappUrl("Hola! Vengo de la tienda web y quiero hacer una consulta.")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="
@@ -244,7 +245,7 @@ const ShopHome = () => {
 
       {/* BOTÓN FLOTANTE WHATSAPP (Solo Mobile) */}
       <a
-        href="https://wa.link/qeelcn"
+        href={whatsappUrl("Hola! Vengo de la tienda web y quiero hacer una consulta.")}
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-6 right-6 z-40 p-4 bg-emerald-500 text-white rounded-full shadow-2xl sm:hidden active:scale-90 transition-transform"
